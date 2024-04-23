@@ -1,1 +1,1 @@
-# Optimizing-VPINNs-using-LS
+# Optimizing-VPINNs-Using-LS
