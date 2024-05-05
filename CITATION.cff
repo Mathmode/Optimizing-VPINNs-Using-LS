@@ -4,13 +4,7 @@ authors:
 - family-names: "Uriarte"
   given-names: "Carlos"
   orcid: "https://orcid.org/0000-0002-0155-3091"
-- family-names: "Bastidas"
-  given-names: "Manuela"
-  orcid: "https://orcid.org/0000-0002-3006-2363"
-- family-names: "Taylor"
-  given-names: "Jamie M."
-  orcid: "https://orcid.org/0000-0002-5423-828X"
-title: "Optimizing-VPINNs-using-LS"
+title: "Optimizing-VPINNs-Using-LS"
 version: 1.0.0
 doi: 10.5281/zenodo.1234
 date-released: 2024-04-23
