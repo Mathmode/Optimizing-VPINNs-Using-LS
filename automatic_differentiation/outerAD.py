@@ -10,36 +10,39 @@ This script is currently optimized to be executed in the David server.
 @author: curiarteb
 """
 
-##### Configuration variables #####
-
-#Path to the Python binary that will run 'inner.py'
-RUN_PATH = './checkrun.sh'
-#Path to the inner script
-INNER = 'innerAD.py'
-#String to identify the line reporting FLOPS. CPU-dependent!!
-FLOPS_ID = 'fp_ret_sse_avx_ops.all'
-#Perf command. CPU-dependent!!
-COMMAND = f'perf stat -I 1000 -e {FLOPS_ID} {RUN_PATH} {INNER}'
-
 import subprocess, os, csv, shutil
 import numpy as np
-import pandas as pd
+
+##### Configuration variables #####
+# Path to the instruction that will run 'innerAD.py'
+RUN_PATH = './checkrun.sh'
+# Path to the inner script
+INNER = 'innerAD.py'
+# String to identify the line reporting FLOPS. CPU-dependent!
+FLOPS_ID = 'fp_ret_sse_avx_ops.all'
+# Perf command
+COMMAND = f'perf stat -I 1000 -e {FLOPS_ID} {RUN_PATH} {INNER}'
+# Results folder
+FOLDER_NAME = 'results'
 
 # To give permission to RUN_PATH for execution
 subprocess.run(['chmod','a+x', f'{RUN_PATH}'])
 
-def subprocess2measureflops(input_dim, output_dim, checkpoint, error_file="stdout_stderr.txt"):
+# Create 'results' folder    
+if os.path.exists(FOLDER_NAME):
+    shutil.rmtree(FOLDER_NAME)
+    os.makedirs(FOLDER_NAME)
+else:
+    os.makedirs(FOLDER_NAME)
+
+def subprocess2measureflops(input_dim, output_dim, checkpoint, error_file= FOLDER_NAME + "/stdout_stderr.txt"):
 
     sp = subprocess.run([f'{COMMAND} {input_dim} {output_dim} {checkpoint}'], 
                         shell=True, capture_output=True,
                         text=True, check=True)
-    
-    #print(sp.stdout)
-    #print(sp.returncode)
-    #print(sp.stderr)  
 
-    # In case the subprocess terminates for some reason different from
-    # a regular execution, we terminate and save the 'stdout' and 'stderr'. 
+    # In case the subprocess terminates with error (see 'checkrun.sh'),
+    # we print an error message and save the 'stdout' and 'stderr'. 
     if 'RUNERROR' in sp.stdout:
         print(f"Subprocess '{COMMAND} {input_dim} {output_dim} {checkpoint}' failed!")
         print(f"See '{error_file}' for the 'stdout' and the 'stderr' of the failed execution.")
@@ -54,9 +57,8 @@ def subprocess2measureflops(input_dim, output_dim, checkpoint, error_file="stdou
                 
         return np.nan
     
-    # If the execution was correct, we take the FLOPs of the inner execution
-    else:
-        
+    # If the execution is correct, we take the FLOPs of the execution
+    else:        
         # If no error, remove the output file if it exists from a previous execution
         if os.path.exists(error_file):
             os.remove(error_file)
@@ -69,21 +71,13 @@ def subprocess2measureflops(input_dim, output_dim, checkpoint, error_file="stdou
         flops_list = [int(line.split()[1].replace('.', '')) for line in lines]
         flops = sum(flops_list)
         return flops
-
-# Create 'results' folder    
-folder_name = "results"
-if os.path.exists(folder_name):
-    shutil.rmtree(folder_name)
-    os.makedirs(folder_name)
-else:
-    os.makedirs(folder_name)
     
-# Create three csv for different data
-flops = folder_name + '/flops_autodiff.csv'
-ratios = folder_name + '/ratios_autodiff.csv'
+# Create three csv for different data (open, intialize, and close)
+flops = FOLDER_NAME + '/flops_autodiff.csv'
+ratios = FOLDER_NAME + '/ratios_autodiff.csv'
 
-headers1 = ['input_dim','output_dim','eval','fwd','fwd2','bwd','bwd2','fwdbwd','bwdfwd']
-headers2 = ['input_dim','output_dim','fwd','fwd2','bwd','bwd2','fwdbwd','bwdfwd']
+headers1 = ['input_dim','output_dim','eval','fwd','bwd']
+headers2 = ['input_dim','output_dim','fwd','bwd']
 
 with open(flops, mode='w', newline='') as file:
     writer = csv.DictWriter(file, fieldnames=headers1)
@@ -95,10 +89,11 @@ with open(ratios, mode='w', newline='') as file:
     writer.writeheader()
 file.close()
     
+# Input and output dimensions for experimentation
+sizes = [2**k for k in range(10)]
 
-sizes = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
-
-
+# We perform the experimentation and compute the checkpoint-by-checkpoint 
+# subtractions to extract the interested FLOP measurements.
 for i in sizes:
     for o in sizes:
         print("\nINPUT:", i, "- OUTPUT:", o)
@@ -119,56 +114,26 @@ for i in sizes:
         prev = post
         print("fwd")
         
-        post = subprocess2measureflops(i, o, "fwd2")
-        fwd2 = post - prev
-        ratio_fwd2 = fwd2/evaluation
-        prev = post
-        print("fwd2")
-        
         post = subprocess2measureflops(i, o, "bwd")
         bwd = post - prev
         ratio_bwd = bwd/evaluation
         prev = post
         print("bwd")
         
-        post = subprocess2measureflops(i, o, "bwd2")
-        bwd2 = post - prev
-        ratio_bwd2 = bwd2/evaluation
-        prev = post
-        print("bwd2")
-        
-        post = subprocess2measureflops(i, o, "fwdbwd")
-        fwdbwd = post - prev
-        ratio_fwdbwd = fwdbwd/evaluation
-        prev = post
-        print("fwdbwd")
-        
-        post = subprocess2measureflops(i, o, "bwdfwd")
-        bwdfwd = post - prev
-        ratio_bwdfwd = bwdfwd/evaluation
-        prev = post
-        print("bwdfwd")
-        
         flops_dict = {'input_dim':i,
                       'output_dim':o,
                       'eval':"{:.2e}".format(evaluation),
                       'fwd':"{:.2e}".format(fwd),
-                      'fwd2':"{:.2e}".format(fwd2),
-                      'bwd':"{:.2e}".format(bwd),
-                      'bwd2':"{:.2e}".format(bwd2),
-                      'fwdbwd':"{:.2e}".format(fwdbwd),
-                      'bwdfwd':"{:.2e}".format(bwdfwd)}
+                      'bwd':"{:.2e}".format(bwd)
+                      }
         
         ratios_dict = {'input_dim':i,
                       'output_dim':o,
                       'fwd':"{:.2e}".format(ratio_fwd),
-                      'fwd2':"{:.2e}".format(ratio_fwd2),
-                      'bwd':"{:.2e}".format(ratio_bwd),
-                      'bwd2':"{:.2e}".format(ratio_bwd2),
-                      'fwdbwd':"{:.2e}".format(ratio_fwdbwd),
-                      'bwdfwd':"{:.2e}".format(ratio_bwdfwd)}
+                      'bwd':"{:.2e}".format(ratio_bwd)
+                      }
         
-        # Load data in the csv-s
+        # Load data in the csv-s (open, add, and close)
         with open(flops, mode='a', newline='') as file:
             writer = csv.DictWriter(file, fieldnames=headers1)
             writer.writerow(flops_dict)
@@ -181,19 +146,7 @@ for i in sizes:
         
         print(f"line in {flops} and {ratios}")
         
-# Postprocess the generated data for Figures 3 and 4 in the manuscript:
 
-ratios_data = pd.read_csv(ratios)
-
-# For "figure3_data.csv":
-figure3_data = ratios_data[['input_dim', 'output_dim', 'fwd', 'bwd']]
-figure3_data.to_csv(folder_name + "/figure3_data.csv", index=False)
-
-# For "figure4_data.csv":
-figure4_data = ratios_data[ratios_data['input_dim'] == 1][['output_dim', 'fwd', 'fwd2', 'bwd', 'bwd2']]
-figure4_data.to_csv(folder_name + "/figure4_data.csv", index=False)
-
-print("\nfigure3_data.csv and figure4_data.csv")
 print("\n'outerFLOPs.py' run finished!")
 
 
