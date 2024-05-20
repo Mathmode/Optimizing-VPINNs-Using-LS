@@ -81,7 +81,7 @@ class loss_GD(keras.Model):
     
 class loss_LSGD(keras.Model):
     
-    # For GD, we only invoke the 'call'
+    # For LSGD, we only invoke the 'call'
     
     # For LS, we need to invoke:
     # (Step 1) 'construct_LHMandRHV',
@@ -239,9 +239,16 @@ class loss_GDandLSGD(keras.Model):
     def optimal_computable_vars(self, regularizer = 10**(-8)):
         
         weights_optimal = tf.linalg.lstsq(self.B, self.l, l2_regularizer=regularizer)
-        self.computable_varsLSGD.assign(weights_optimal)
+        self.computable_vars.assign(weights_optimal)
         
         return weights_optimal
+        
+    # Compute || B w - l ||^2 given B, w and l
+    def from_LHMandRHV_to_loss(self):
+        residual = self.B @ self.net.weights[-1] - self.l
+        loss = tf.reduce_sum(residual**2)
+        
+        return loss
     
     # This is the ordinary DFR loss evaluation that does not pass throughout the matrix construction 
     def call(self, inputs):
@@ -290,7 +297,5 @@ class loss_GDandLSGD(keras.Model):
         dLSGD = tape.gradient(lossLSGD, self.trainable_varsLSGD)
         self.optimizerGD.apply(dGD, self.trainable_varsGD)
         self.optimizerLSGD.apply(dLSGD, self.trainable_varsLSGD)
-        
-        
         
         return {"lossGD": lossGD, "lossLSGD": lossLSGD}

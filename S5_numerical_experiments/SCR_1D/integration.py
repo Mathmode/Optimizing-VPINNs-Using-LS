@@ -5,6 +5,7 @@ Last edited on May, 2024
 
 @author: curiarteb
 """
+
 from config import A,B,K,KTEST,SAMPLING
 import numpy as np
 import tensorflow as tf
@@ -50,6 +51,7 @@ class integration_points_and_weights():
         points, weights = self.generate_raw()
         points = self.scale * points + self.bias
         weights = self.scale * weights
-        return [tf.convert_to_tensor(np.expand_dims(points.flatten(), axis=1)),
-                tf.convert_to_tensor(np.expand_dims(weights.flatten(), axis=1))]
+
+        return [np.expand_dims(points.flatten(), axis=1),
+                np.expand_dims(weights.flatten(), axis=1)]
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+<<<<<<< HEAD
 Last edited on May, 2024
 
 @author: curiarteb
@@ -77,11 +78,3 @@ class u_net(keras.Model):
             u = self.call_vect(x)
         du = tf.squeeze(tape.batch_jacobian(u,x))
         return du
-        
-
-        
-
-        
-        
-        
-        

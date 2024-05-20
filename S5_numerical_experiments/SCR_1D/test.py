@@ -6,6 +6,7 @@ Last edited on May, 2024
 @author: curiarteb
 """
 
+
 from config import A,B,M
 import numpy as np
 import os
