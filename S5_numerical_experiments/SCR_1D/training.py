@@ -8,7 +8,7 @@ Created on Oct 2023
 import tensorflow as tf
 import numpy as np
 
-from SCR.callbackPlots import PlotSolutionCallback
+from SCR_1D.callbackPlots import PlotSolutionCallback
 
 
 # =============================================================================

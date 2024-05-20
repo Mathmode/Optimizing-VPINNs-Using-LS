@@ -5,13 +5,18 @@ Last edited on May, 2024
 
 @author: curiarteb
 """
-from config import A,B,K,SAMPLING
+
+from config import A,B,K,KTEST,SAMPLING
 import numpy as np
+import tensorflow as tf
 
 class integration_points_and_weights():
-    def __init__(self):
+    def __init__(self,TEST=False):
         
-        num_subintervals = K//2 + 1
+        if not TEST:
+            num_subintervals = K//2 + 1
+        else:
+            num_subintervals = KTEST//2 + 1
         
         # We generate the integration grid
         if SAMPLING == "uniform":
@@ -46,6 +51,7 @@ class integration_points_and_weights():
         points, weights = self.generate_raw()
         points = self.scale * points + self.bias
         weights = self.scale * weights
+
         return [np.expand_dims(points.flatten(), axis=1),
                 np.expand_dims(weights.flatten(), axis=1)]
 
