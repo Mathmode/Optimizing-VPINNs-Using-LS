@@ -7,8 +7,7 @@ Last edited on May, 2024
 """
 
 from config import A,B,K,KTEST,SAMPLING
-import numpy as np
-import tensorflow as tf
+import numpy as np, tensorflow as tf
 
 class integration_points_and_weights():
     def __init__(self,TEST=False):
@@ -52,6 +51,6 @@ class integration_points_and_weights():
         points = self.scale * points + self.bias
         weights = self.scale * weights
 
-        return [np.expand_dims(points.flatten(), axis=1),
-                np.expand_dims(weights.flatten(), axis=1)]
+        return [tf.convert_to_tensor(np.expand_dims(points.flatten(), axis=1)),
+                tf.convert_to_tensor(np.expand_dims(weights.flatten(), axis=1))]
 

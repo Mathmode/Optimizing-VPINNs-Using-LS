@@ -6,7 +6,7 @@ Last edited on May, 2024
 @author: curiarteb
 """
 
-from config import SOURCE, EXACT, IMPLEMENTATION, LEARNING_RATE
+from config import SOURCE, EXACT, DEXACT, IMPLEMENTATION, LEARNING_RATE
 from SCR_1D.test import test_functions
 from SCR_1D.integration import integration_points_and_weights
 import tensorflow as tf
@@ -239,7 +239,7 @@ class loss_GDandLSGD(keras.Model):
     def optimal_computable_vars(self, regularizer = 10**(-8)):
         
         weights_optimal = tf.linalg.lstsq(self.B, self.l, l2_regularizer=regularizer)
-        self.computable_vars.assign(weights_optimal)
+        self.computable_varsLSGD.assign(weights_optimal)
         
         return weights_optimal
         
@@ -285,9 +285,14 @@ class loss_GDandLSGD(keras.Model):
     def train_step(self, data):
         
         inputs = self.train_data()
+        xtest, wtest =  self.test_data()
         
         self.construct_LHMandRHV(inputs)
         self.optimal_computable_vars()
+        
+        # Error in the energy norm computation
+        errorGD = tf.reduce_sum(wtest * tf.square(self.netGD.dbwd(xtest) - DEXACT(xtest)))
+        errorLSGD = tf.reduce_sum(wtest * tf.square(self.netLSGD.dbwd(xtest) - DEXACT(xtest)))
         
         # Optimize netGD and netLSGD
         with tf.GradientTape(watch_accessed_variables=False, persistent=True) as tape:
@@ -298,4 +303,4 @@ class loss_GDandLSGD(keras.Model):
         self.optimizerGD.apply(dGD, self.trainable_varsGD)
         self.optimizerLSGD.apply(dLSGD, self.trainable_varsLSGD)
         
-        return {"lossGD": lossGD, "lossLSGD": lossLSGD}
+        return {"lossGD": lossGD, "lossLSGD": lossLSGD, "errorGD": errorGD, "errorLSGD": errorLSGD}
