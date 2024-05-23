@@ -51,7 +51,7 @@ from SCR_1D.save import save_and_plot_net, save_and_plot_loss
 from config import SOURCE, EXACT, DEXACT
 
 # Other global variables not in 'config.py'
-EPOCHS = 500
+EPOCHS = 1000
 
 x = tf.convert_to_tensor(np.expand_dims(np.linspace(A+10**(-4), B, num=1000), axis=1))
 

@@ -78,3 +78,27 @@ class u_net(keras.Model):
             u = self.call_vect(x)
         du = tf.squeeze(tape.batch_jacobian(u,x))
         return du
+    
+    # Computes the 2nd order derivative with respect to the input 
+    # via forward autodiff for the vector output
+    def ddfwd(self, inputs):
+        x = inputs
+        with tf.autodiff.ForwardAccumulator(primals=x, tangents=tf.ones_like(x)) as touter:
+            with tf.autodiff.ForwardAccumulator(primals=x, tangents=tf.ones_like(x)) as tinner:
+                u = self(x)
+            du = tinner.jvp(u)
+        ddu = touter.jvp(du)
+        return ddu
+    
+    # Computes the 2nd order derivative with respect to the input 
+    # via backward autodiff for the vector output
+    def ddbwd(self, inputs):
+        x = inputs
+        with tf.GradientTape(watch_accessed_variables=False) as touter:
+            touter.watch(x)
+            with tf.GradientTape(watch_accessed_variables=False) as tinner:
+                tinner.watch(x)
+                u = self(x)
+            du = tinner.gradient(u,x)
+        ddu = touter.gradient(du,x)
+        return ddu

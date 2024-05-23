@@ -20,13 +20,14 @@ def execute_scripts(script_list):
         try:
             print(f"Executing {script}...")
             with subprocess.Popen([PYTHON_PATH, '-u', script], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True) as sp:
+                
                 # Print stdout and stderr in real-time
                 for line in sp.stdout:
                     print(line, end='')
-                for line in sp.stderr:
-                    print(line, end='')
-                sp.wait()
-                print(f"Finished executing {script} with return code {sp.returncode}")
+                # for line in sp.stderr:
+                #     print(line, end='')
+                # sp.wait()
+                print(f"Finished executing {script}")
 
         except subprocess.CalledProcessError as e:
             print(f"Error executing {script}: {e}")
