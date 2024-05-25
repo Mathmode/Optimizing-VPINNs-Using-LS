@@ -7,7 +7,9 @@ Last edited on May, 2024
 @author: curiarteb
 """
 
-from config import A,B,N
+from config import A,B,N,SOURCE,EXACT,IMPLEMENTATION
+from SCR_1D.test import test_functions
+from SCR_1D.integration import integration_points_and_weights
 import os, tensorflow as tf
 os.environ["KERAS_BACKEND"] = "tensorflow"
 import keras
@@ -102,3 +104,72 @@ class u_net(keras.Model):
             du = tinner.gradient(u,x)
         ddu = touter.gradient(du,x)
         return ddu
+    
+class error(keras.Model):
+    def __init__(self, net, **kwargs):
+        super(error, self).__init__()
+        
+        self.net = net
+        self.error = EXACT
+    
+    # Returns the scalar output of the error function
+    def call(self, inputs):
+        u = self.net(inputs)
+        error = self.error(inputs)
+        return u - error
+    
+    def d(self, inputs):
+        x = inputs
+        with tf.GradientTape(watch_accessed_variables=False) as tape:
+            tape.watch(x)
+            e = self(x)
+        de = tape.gradient(e,x)
+        return de
+    
+class residual(keras.Model):
+    def __init__(self, net, **kwargs):
+        super(residual, self).__init__()
+        
+        self.net = net
+        self.f = SOURCE
+        self.test = test_functions()
+        self.integration_data = integration_points_and_weights(TEST=False)
+
+    
+    def call(self, inputs):
+        
+        x,w = self.integration_data()
+
+        v = self.test(x)
+        f = self.f(x)
+        RHV = tf.einsum("kr,kr,km -> mr", w, f, v)
+        
+        
+        if IMPLEMENTATION == "weak":
+            du = self.net.dbwd(x)
+            dv = self.test.d(x)
+            LHV = tf.einsum("kr,kr,km->mr", w, du, dv)
+                
+        elif IMPLEMENTATION == "ultraweak":
+            u = self.net(x)
+            ddv = self.test.dd(x)
+            LHV = tf.einsum("kr,kr,km->mr", w, -u, ddv)
+        
+        projection_coeff = LHV - RHV
+        
+        v_eval = self.test(inputs)
+        
+        projection = tf.einsum("mr,km->kr",projection_coeff,v_eval)
+        
+        return projection
+    
+    def d(self, inputs):
+        x = inputs
+        with tf.GradientTape(watch_accessed_variables=False) as tape:
+            tape.watch(x)
+            r = self(x)
+        dr = tape.gradient(r,x)
+        return dr
+
+        
+ 

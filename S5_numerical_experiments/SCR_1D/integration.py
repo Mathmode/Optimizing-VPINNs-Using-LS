@@ -37,6 +37,7 @@ class integration_points_and_weights():
         
     # Generates random integration points and weights for exact integration in p=1
     def generate_raw(self):
+        
         x1 = np.expand_dims(np.random.uniform(low=-1, high=1,
                                               size=len(self.grid)-1), axis=1)
         x2 = -x1

@@ -6,9 +6,10 @@ Last edited on May, 2024
 @author: curiarteb
 """
 
-from config import SOURCE, EXACT, DEXACT, IMPLEMENTATION, LEARNING_RATE
+from config import SOURCE, EXACT, IMPLEMENTATION, LEARNING_RATE
 from SCR_1D.test import test_functions
 from SCR_1D.integration import integration_points_and_weights
+from SCR_1D.models import error
 import tensorflow as tf
 import os
 os.environ["KERAS_BACKEND"] = "tensorflow"
@@ -199,9 +200,11 @@ class loss_GDandLSGD(keras.Model):
         
         # First version of the neural network
         self.netGD = netGD
+        self.errorGD = error(netGD)
         
         # A copy of the neural network for the LSGD training
         self.netLSGD = netLSGD
+        self.errorLSGD = error(netLSGD)
         
         # Weights for the GD-based optimization for 'netLSGD'
         self.trainable_varsGD = [v.value for v in self.netGD.weights]
@@ -291,8 +294,8 @@ class loss_GDandLSGD(keras.Model):
         self.optimal_computable_vars()
         
         # Error in the energy norm computation
-        errorGD = tf.reduce_sum(wtest * tf.square(self.netGD.dbwd(xtest) - DEXACT(xtest)))
-        errorLSGD = tf.reduce_sum(wtest * tf.square(self.netLSGD.dbwd(xtest) - DEXACT(xtest)))
+        errorGD = tf.reduce_sum(wtest * tf.square(self.errorGD.d(xtest)))
+        errorLSGD = tf.reduce_sum(wtest * tf.square(self.errorLSGD.d(xtest)))
         
         # Optimize netGD and netLSGD
         with tf.GradientTape(watch_accessed_variables=False, persistent=True) as tape:
