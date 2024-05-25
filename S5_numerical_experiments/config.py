@@ -1,4 +1,4 @@
-EXPERIMENT_REFERENCE = "S511weak" # Reference
+EXPERIMENT_REFERENCE = "S511ultraweak" # Reference
 RESULTS_FOLDER = "results" # Folder name for saving results
 #
 import keras, numpy as np, tensorflow as tf # Necessary packages (if needed)

@@ -6,16 +6,13 @@ Last edited on May, 2024
 @author: curiarteb
 """
 
-from config import A,B,K,KTEST,SAMPLING
+from config import A,B,K,SAMPLING
 import numpy as np, tensorflow as tf
 
 class integration_points_and_weights():
-    def __init__(self,TEST=False):
+    def __init__(self,threshold=K):
         
-        if not TEST:
-            num_subintervals = K//2 + 1
-        else:
-            num_subintervals = KTEST//2 + 1
+        num_subintervals = threshold//2 + 1
         
         # We generate the integration grid
         if SAMPLING == "uniform":

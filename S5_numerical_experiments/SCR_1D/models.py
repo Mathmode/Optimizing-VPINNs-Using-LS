@@ -7,10 +7,9 @@ Last edited on May, 2024
 @author: curiarteb
 """
 
-from config import A,B,N,SOURCE,EXACT,IMPLEMENTATION
-from SCR_1D.test import test_functions
+from config import A,B,N,M,K,KTEST,SOURCE,EXACT,IMPLEMENTATION
 from SCR_1D.integration import integration_points_and_weights
-import os, tensorflow as tf
+import os, tensorflow as tf, numpy as np
 os.environ["KERAS_BACKEND"] = "tensorflow"
 import keras
 dtype='float64' 
@@ -126,6 +125,27 @@ class error(keras.Model):
         de = tape.gradient(e,x)
         return de
     
+class test_functions(keras.Model):
+    def __init__(self, spectrum_size=M, **kwargs):
+        super(test_functions,self).__init__()
+        
+        self.M = spectrum_size
+        self.eval = lambda x: keras.ops.concatenate([np.sqrt(2*(B-A))/(m*np.pi)*keras.ops.sin(m*np.pi*(x-A)/(B-A)) for m in range(1, self.M+1)], axis=1) # sines normalized in H10
+        self.deval = lambda x: keras.ops.concatenate([np.sqrt(2/(B-A))*keras.ops.cos(m*np.pi*(x-A)/(B-A)) for m in range(1, self.M+1)], axis=1) # dsines normalized  in H10
+        self.ddeval = lambda x: keras.ops.concatenate([-np.sqrt(2/(B-A))*(m*np.pi/(B-A))*keras.ops.sin(m*np.pi*(x-A)/(B-A)) for m in range(1, self.M+1)], axis=1) # ddsines normalized in H10
+        
+    # Evaluation of the test functions
+    def call(self, x):
+        return self.eval(x)
+    
+    # Evaluation of the spatial gradient of the test functions
+    def d(self, x):
+        return self.deval(x)
+    
+    # Evaluation of the spatial laplacian of the test functions
+    def dd(self, x):
+        return self.ddeval(x)
+    
 class residual(keras.Model):
     def __init__(self, net, **kwargs):
         super(residual, self).__init__()
@@ -133,7 +153,12 @@ class residual(keras.Model):
         self.net = net
         self.f = SOURCE
         self.test = test_functions()
-        self.integration_data = integration_points_and_weights(TEST=False)
+        self.integration_data = integration_points_and_weights(threshold=K)
+        self.spectrum_test = test_functions(spectrum_size=8*M)
+        self.spectrum_integration_data = integration_points_and_weights(threshold=8*KTEST)
+        
+    def build(self, input_shape):
+        super(residual, self).build(input_shape)
 
     
     def call(self, inputs):
@@ -172,4 +197,26 @@ class residual(keras.Model):
         return dr
 
         
+    def spectrum(self):
+                
+        x,w = self.spectrum_integration_data()
+
+        v = self.spectrum_test(x)
+        f = self.f(x)
+        RHV = tf.einsum("kr,kr,km -> mr", w, f, v)
+        
+        
+        if IMPLEMENTATION == "weak":
+            du = self.net.dbwd(x)
+            dv = self.spectrum_test.d(x)
+            LHV = tf.einsum("kr,kr,km->mr", w, du, dv)
+                
+        elif IMPLEMENTATION == "ultraweak":
+            u = self.net(x)
+            ddv = self.spectrum_test.dd(x)
+            LHV = tf.einsum("kr,kr,km->mr", w, -u, ddv)
+        
+        projection_coeff = LHV - RHV
+        
+        return np.arange(1,self.spectrum_test.M+1), projection_coeff.numpy().flatten()
  

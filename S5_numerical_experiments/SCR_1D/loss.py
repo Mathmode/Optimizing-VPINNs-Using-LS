@@ -6,8 +6,8 @@ Last edited on May, 2024
 @author: curiarteb
 """
 
-from config import SOURCE, EXACT, IMPLEMENTATION, LEARNING_RATE
-from SCR_1D.test import test_functions
+from config import K,KTEST,SOURCE, EXACT, IMPLEMENTATION, LEARNING_RATE
+from SCR_1D.models import test_functions
 from SCR_1D.integration import integration_points_and_weights
 from SCR_1D.models import error
 import tensorflow as tf
@@ -40,7 +40,7 @@ class loss_GD(keras.Model):
         self.trainable_vars = [v.value for v in self.net.weights]
         
         # Data generators:
-        self.train_data = integration_points_and_weights(TEST=False)
+        self.train_data = integration_points_and_weights(threshold=K)
     
     def compile(self):
         super().compile()
@@ -105,8 +105,8 @@ class loss_LSGD(keras.Model):
         self.computable_vars = self.net.weights[-1].value
         
         # Data generators:
-        self.train_data = integration_points_and_weights(TEST=False)
-        self.test_data = integration_points_and_weights(TEST=True)
+        self.train_data = integration_points_and_weights(threshold=K)
+        self.test_data = integration_points_and_weights(threshold=KTEST)
     
     def construct_LHMandRHV(self, inputs):
         
@@ -213,8 +213,8 @@ class loss_GDandLSGD(keras.Model):
         self.computable_varsLSGD = self.netLSGD.weights[-1].value
         
         # Data generators:
-        self.train_data = integration_points_and_weights(TEST=False)
-        self.test_data = integration_points_and_weights(TEST=True)
+        self.train_data = integration_points_and_weights(threshold=K)
+        self.test_data = integration_points_and_weights(threshold=KTEST)
     
     def construct_LHMandRHV(self, inputs):
         
