@@ -9,6 +9,7 @@ Last edited on May, 2024
 
 from config import A,B,N,M,K,KTEST,SOURCE,EXACT,IMPLEMENTATION
 from SCR_1D.integration import integration_points_and_weights
+from scipy.integrate import quad
 import os, tensorflow as tf, numpy as np
 os.environ["KERAS_BACKEND"] = "tensorflow"
 import keras
@@ -23,26 +24,29 @@ class u_net(keras.Model):
         super(u_net, self).__init__()
         
         # Hidden layers
-        self.layers_list = [keras.layers.Dense(units=N, activation="tanh", use_bias=True) for i in range(2)]
-        self.layers_list.append(keras.layers.Dense(units=N, activation="tanh", use_bias=True))
+        self.hidden_layers = [keras.layers.Dense(units=N, activation="tanh", use_bias=True) for i in range(3)]
         
         #Last (linear) layer
-        self.last_layer = keras.layers.Dense(units=1, activation=None, use_bias=False)
+        self.linear_layer = keras.layers.Dense(units=1, activation=None, use_bias=False)
+        
+    def build(self, input_shape):
+        super(u_net, self).build(input_shape)
 
     # Returns the vector output of the neural network
     def call_vect(self, inputs):
         x = inputs
-        for layer in self.layers_list:
+        for layer in self.hidden_layers:
             x = layer(x)
-
-        x = x*(inputs-A)
-        x = x*(inputs-B) # To impose boundary conditions
+            
+        # To impose boundary conditions
+        x = x*(inputs-A)*(inputs - B)
+        
         return x
     
     # Returns the scalar output of the neural network
     def call(self, inputs):
         out = self.call_vect(inputs)
-        return self.last_layer(out)
+        return self.linear_layer(out)
     
     # Computes the derivative with respect to the input via forward autodiff
     def dfwd(self, inputs):
@@ -146,6 +150,7 @@ class test_functions(keras.Model):
     def dd(self, x):
         return self.ddeval(x)
     
+    
 class residual(keras.Model):
     def __init__(self, net, **kwargs):
         super(residual, self).__init__()
@@ -154,8 +159,8 @@ class residual(keras.Model):
         self.f = SOURCE
         self.test = test_functions()
         self.integration_data = integration_points_and_weights(threshold=K)
-        self.spectrum_test = test_functions(spectrum_size=8*M)
-        self.spectrum_integration_data = integration_points_and_weights(threshold=8*KTEST)
+        self.spectrum_test = test_functions(spectrum_size=1024)
+        self.spectrum_integration_data = integration_points_and_weights(threshold = 32*8*1024)
         
     def build(self, input_shape):
         super(residual, self).build(input_shape)
@@ -206,17 +211,12 @@ class residual(keras.Model):
         RHV = tf.einsum("kr,kr,km -> mr", w, f, v)
         
         
-        if IMPLEMENTATION == "weak":
-            du = self.net.dbwd(x)
-            dv = self.spectrum_test.d(x)
-            LHV = tf.einsum("kr,kr,km->mr", w, du, dv)
+        du = self.net.dbwd(x)
+        dv = self.spectrum_test.d(x)
+        LHV = tf.einsum("kr,kr,km->mr", w, du, dv)
                 
-        elif IMPLEMENTATION == "ultraweak":
-            u = self.net(x)
-            ddv = self.spectrum_test.dd(x)
-            LHV = tf.einsum("kr,kr,km->mr", w, -u, ddv)
         
-        projection_coeff = LHV - RHV
+        positive_projection_coeff = tf.square(LHV - RHV)
         
-        return np.arange(1,self.spectrum_test.M+1), projection_coeff.numpy().flatten()
+        return np.arange(1,self.spectrum_test.M+1), positive_projection_coeff.numpy().flatten()
  

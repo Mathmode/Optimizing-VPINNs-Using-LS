@@ -5,15 +5,14 @@ Last edited on May, 2024
 @author: curiarteb
 '''
 
-import subprocess, os, shutil
+import subprocess, os
 
 PYTHON_PATH = "python"
 RESULTS_FOLDER = "results"
 
-# Create the results folder if it does not exist (or empty if it exists)
-if os.path.exists(RESULTS_FOLDER):
-    shutil.rmtree(RESULTS_FOLDER)
-os.makedirs(RESULTS_FOLDER)
+# Create the results folder if it does not exist
+if not os.path.exists(RESULTS_FOLDER):
+    os.makedirs(RESULTS_FOLDER)
 
 def execute_scripts(script_list):
     for script in script_list:
@@ -38,8 +37,8 @@ def execute_scripts(script_list):
             print(f"An unexpected error occurred while executing {script}: {e}")
 
 script_list = [
-    'S511weak.py', 'S511ultraweak.py',
-    'S512weak.py', 'S512ultraweak.py', 
+    # 'S511weak.py', 'S511ultraweak.py',
+    # 'S512weak.py', 'S512ultraweak.py', 
     'S521weak.py', 'S521ultraweak.py',
     'S522weak.py', 'S522ultraweak.py', 
     'S523weak.py', 'S523ultraweak.py'

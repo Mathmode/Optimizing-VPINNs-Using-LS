@@ -6,7 +6,7 @@ Last edited on May, 2024
 @author: curiarteb
 """
 
-from config import K,KTEST,SOURCE, EXACT, IMPLEMENTATION, LEARNING_RATE
+from config import K,KTEST,SOURCE, EXACT, EXACT_NORM2, IMPLEMENTATION, LEARNING_RATE
 from SCR_1D.models import test_functions
 from SCR_1D.integration import integration_points_and_weights
 from SCR_1D.models import error
@@ -263,7 +263,7 @@ class loss_GDandLSGD(keras.Model):
         RHV = tf.einsum("kr,kr,km -> mr", w, f, v)
         
         
-        if IMPLEMENTATION == "weak":
+        if IMPLEMENTATION == "weak":  
             duGD = self.netGD.dbwd(x)
             duLSGD = self.netLSGD.dbwd(x)
             dv = self.test.d(x)
@@ -306,4 +306,4 @@ class loss_GDandLSGD(keras.Model):
         self.optimizerGD.apply(dGD, self.trainable_varsGD)
         self.optimizerLSGD.apply(dLSGD, self.trainable_varsLSGD)
         
-        return {"lossGD": lossGD, "lossLSGD": lossLSGD, "errorGD": errorGD, "errorLSGD": errorLSGD}
+        return {"lossGD": lossGD, "lossLSGD": lossLSGD, "error2GD": errorGD, "error2LSGD": errorLSGD, "rel_errorGD": tf.sqrt(errorGD/EXACT_NORM2), "rel_errorLSGD": tf.sqrt(errorLSGD/EXACT_NORM2)}

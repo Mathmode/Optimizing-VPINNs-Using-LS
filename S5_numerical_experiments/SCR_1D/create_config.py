@@ -2,7 +2,7 @@
 
 def create_config(global_variables):
     
-   EXPERIMENT_REFERENCE, RESULTS_FOLDER, PACKAGES, EXACT, SOURCE, A, B, N, M, K, KTEST, IMPLEMENTATION, SAMPLING, LEARNING_RATE, EPOCHS, XPLOT = global_variables
+   EXPERIMENT_REFERENCE, RESULTS_FOLDER, PACKAGES, EXACT, EXACT_NORM2, SOURCE, A, B, N, M, K, KTEST, IMPLEMENTATION, SAMPLING, LEARNING_RATE, EPOCHS, XPLOT, LEGEND_LOCATION = global_variables
 
    
    config_content = f"""EXPERIMENT_REFERENCE = "{EXPERIMENT_REFERENCE}" # Reference
@@ -12,6 +12,7 @@ RESULTS_FOLDER = "{RESULTS_FOLDER}" # Folder name for saving results
 #
 # Gobal parameters for the scripts in SCR_1D
 EXACT = {EXACT} # Exact solution function
+EXACT_NORM2 = {float(EXACT_NORM2)} # Norm of the exact solution
 SOURCE = {SOURCE} # 'Printed' in the script as a function
 A = {float(A)} # Left end-point of the domain of integration
 B = {float(B)} # Right end-point of the domain of integration
@@ -23,7 +24,8 @@ IMPLEMENTATION = "{IMPLEMENTATION}" # 'weak' or 'ultraweak'
 SAMPLING = "{SAMPLING}" # 'uniform' or 'exponential'
 LEARNING_RATE = {float(LEARNING_RATE)}
 EPOCHS = {EPOCHS} # Number of iterations
-XPLOT = {XPLOT} # Domain sample for plotting"""
+XPLOT = {XPLOT} # Domain sample for plotting
+LEGEND_LOCATION = "{LEGEND_LOCATION}" # Location for legend in all matplotlib plots"""
 
    # Write the new content to config.py
    with open('config.py', 'w') as file:

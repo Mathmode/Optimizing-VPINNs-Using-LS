@@ -14,9 +14,9 @@ from config import RESULTS_FOLDER, EXPERIMENT_REFERENCE, EPOCHS, XPLOT
 
 x = XPLOT
 
-netGD, netLSGD = u_net(), u_net()
-netGD(x), netLSGD(x)
-netLSGD.set_weights(netGD.get_weights())
+netINI, netGD, netLSGD = u_net(), u_net(), u_net()
+netINI(XPLOT), netGD(XPLOT), netLSGD(XPLOT)
+netGD.set_weights(netINI.get_weights()), netLSGD.set_weights(netINI.get_weights())
 
 # We activate this backend to save all the plt's in 'save_and_plot_net' 
 # in a pdf file
@@ -27,8 +27,7 @@ print("#######################")
 print(" PLOTS BEFORE TRAINING ")
 print("#######################")
 print()
-figures1 = save_and_plot_net(x,[netGD,netLSGD],file=False)
-figures2 = save_and_plot_spectrum([netGD,netLSGD],file=False)
+figures1 = save_and_plot_net(x,[netINI, netGD,netLSGD],file=False)
 
 print()
 print("########################")
@@ -44,12 +43,12 @@ print("########################")
 print("  PLOTS AFTER TRAINING  ")
 print("########################")
 print()
-figures3 = save_and_plot_loss(training.history,file=f"{RESULTS_FOLDER}/{EXPERIMENT_REFERENCE}_training.csv")
-figures4 = save_and_plot_spectrum([netGD,netLSGD],file=f"{RESULTS_FOLDER}/{EXPERIMENT_REFERENCE}_spectrum.csv")
-figures5 = save_and_plot_net(x,[netGD,netLSGD],file=f"{RESULTS_FOLDER}/{EXPERIMENT_REFERENCE}_predictions.csv")
+figures2 = save_and_plot_loss(training.history,file=f"{RESULTS_FOLDER}/{EXPERIMENT_REFERENCE}_training.csv")
+figures3 = save_and_plot_spectrum([netINI, netGD,netLSGD],file=f"{RESULTS_FOLDER}/{EXPERIMENT_REFERENCE}_spectrum.csv")
+figures4 = save_and_plot_net(x,[netINI, netGD,netLSGD],file=f"{RESULTS_FOLDER}/{EXPERIMENT_REFERENCE}_predictions.csv")
 
 
 # We save all the figures (figures1, figures2 and figures3) in a pdf.
 with PdfPages(f"{RESULTS_FOLDER}/{EXPERIMENT_REFERENCE}_figures.pdf") as pdf:
-    for fig in figures1 + figures2 + figures3 + figures4 + figures5:
-        pdf.savefig(fig)
+    for fig in figures1 + figures2 + figures3 + figures4:
+        pdf.savefig(fig, bbox_inches='tight')
