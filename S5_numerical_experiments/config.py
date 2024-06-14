@@ -1,4 +1,4 @@
-EXPERIMENT_REFERENCE = "S54weak_M128" # Reference
+EXPERIMENT_REFERENCE = "S54ultraweak_M128" # Reference
 RESULTS_FOLDER = "results" # Folder name for saving results
 #
 import numpy as np, tensorflow as tf # Necessary packages (if needed)
@@ -13,9 +13,9 @@ N = 16 # number of trial spanning functions (integer)
 M = 128 # number of test basis functions (integer larger than N)
 K = 4096 # number of integration points (integer larger than M)
 KTEST = 32768 # number of integration points for validation (larger than K)
-IMPLEMENTATION = "weak" # 'weak' or 'ultraweak'
+IMPLEMENTATION = "ultraweak" # 'weak' or 'ultraweak'
 SAMPLING = "exponential" # 'uniform' or 'exponential'
 LEARNING_RATE = 0.001
 EPOCHS = 1000 # Number of iterations
 XPLOT = tf.convert_to_tensor(np.expand_dims(np.linspace(A+10**(-4), B, num=1000), axis=1)) # Domain sample for plotting
-LEGEND_LOCATION = "lower left" # Location for legend in all matplotlib plots
+LEGEND_LOCATION = "best" # Location for legend in all matplotlib plots

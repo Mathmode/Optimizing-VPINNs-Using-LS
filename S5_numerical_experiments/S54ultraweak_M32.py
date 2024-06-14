@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 '''
-Last edited on May, 2024
+Created on May, 2024
 
 @author: curiarteb
 '''
-
-EXPERIMENT_REFERENCE = "S53weak"
+EXPERIMENT_REFERENCE = "S54ultraweak_M32"
 RESULTS_FOLDER = "results"
 
 import numpy as np, os
@@ -21,23 +20,24 @@ np.random.seed(1234)
 from SCR_1D.create_config import create_config
 
 PI = np.pi
+BETA = 0.7
 
 # Define the values you want to assign to the global variables via 'config.py'
-PACKAGES = "import keras, numpy as np, tensorflow as tf"
-EXACT = "lambda x : keras.ops.sin(40*x)*keras.ops.sin(x/2)"
-EXACT_NORM2 = 6401*PI/16
-SOURCE = "lambda x : -40*keras.ops.cos(40*x)*keras.ops.cos(x/2)+6401/4*keras.ops.sin(40*x)*keras.ops.sin(x/2)"
+PACKAGES = "import numpy as np, tensorflow as tf"
+EXACT = f"lambda x : x**{BETA}*({PI}-x)"
+EXACT_NORM2 = (BETA*PI**(1+2*BETA))/(-1+4*BETA**2)
+SOURCE = f"lambda x : {BETA}*x**({BETA}-2)*({BETA}*x-{PI}*{BETA}+x+{PI})"
 A = 0
-B = PI
-N = 64
-M = 128
+B = np.pi
+N = 16
+M = 32
 K = 32*M
 KTEST = 8*K
-IMPLEMENTATION = "weak"
-SAMPLING = "uniform"
+IMPLEMENTATION = "ultraweak"
+SAMPLING = "exponential"
 LEARNING_RATE = 10**(-3)
 EPOCHS = 1000
-XPLOT = "tf.convert_to_tensor(np.expand_dims(np.linspace(A, B, num=1000), axis=1))"
+XPLOT = "tf.convert_to_tensor(np.expand_dims(np.linspace(A+10**(-4), B, num=1000), axis=1))"
 LEGEND_LOCATION = "best"
 
 global_variables = [EXPERIMENT_REFERENCE,

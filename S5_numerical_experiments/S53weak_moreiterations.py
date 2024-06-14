@@ -5,7 +5,7 @@ Last edited on May, 2024
 @author: curiarteb
 '''
 
-EXPERIMENT_REFERENCE = "S53weak"
+EXPERIMENT_REFERENCE = "S53weak_moreiterations"
 RESULTS_FOLDER = "results"
 
 import numpy as np, os
@@ -36,7 +36,7 @@ KTEST = 8*K
 IMPLEMENTATION = "weak"
 SAMPLING = "uniform"
 LEARNING_RATE = 10**(-3)
-EPOCHS = 1000
+EPOCHS = 10000
 XPLOT = "tf.convert_to_tensor(np.expand_dims(np.linspace(A, B, num=1000), axis=1))"
 LEGEND_LOCATION = "best"
 

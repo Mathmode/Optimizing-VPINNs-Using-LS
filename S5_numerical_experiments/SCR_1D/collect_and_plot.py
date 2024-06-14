@@ -7,6 +7,7 @@ Last edited on May, 2024
 """
 import numpy as np, pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 from config import LEGEND_LOCATION
 
 # Enable LaTeX rendering
@@ -74,6 +75,11 @@ def auto_format_each_y_axis(ax, color, side="left"):
             elif side == 'right':
                 ax.yaxis.set_label_coords(1.1, 1.02)
                 ax.text(1.1, 1.02, r'$\times 10^{{{}}}$'.format(exponent), transform=ax.transAxes, ha='center', va='bottom', color=color, fontsize=12)
+                
+# Define the formatter function
+def thousands_formatter(x, pos):
+    return f'{x:,.0f}'
+
 
 
     
@@ -286,30 +292,30 @@ def save_and_plot_spectrum(nets, file=False):
     
             
     plt.figure(figsize=(plot_width, plot_height))
-    plt.plot(modesINI,spectrumINI_out,'o', markersize=5, label="Initial",color="C5", alpha=0.5)
+    plt.plot(modesINI,spectrumINI_out,'o', markersize=6, label="Initial",color="C5", alpha=0.5)
     plt.plot(modesGD,spectrumGD_out,marker='s', linestyle='None', markersize=3, label="Adam",color="C1")
-    plt.plot(modesLSGD,spectrumLSGD_out,marker='^', linestyle='None', markersize=2, label="LS/Adam",color="C0")
+    plt.plot(modesLSGD,spectrumLSGD_out,marker='^', linestyle='None', markersize=3, label="LS/Adam",color="C0")
     plt.ylabel(r"$\{b(u^{\boldsymbol{\alpha},\boldsymbol{\omega}},v_m)-l(v_m)\}^2$", labelpad=10)
     plt.xlabel(r"$m$")
     plt.xscale("log", base=2)
     plt.yscale("log")
     plt.axvline(x=M, color='black', linestyle='--', label=rf"cut-off $M={M}$")
     plt.legend()
-    plt.title(r"Spectrum of $r(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})$")
+    plt.title(r"Spectral coefficients of $r(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})$")
     figures.append(plt.gcf())
     plt.show()
     
     plt.figure(figsize=(plot_width, plot_height))
-    plt.plot(modesINI,data['accumINI'],'o', markersize=5, label="Initial",color="C5", alpha=0.5)
+    plt.plot(modesINI,data['accumINI'],'o', markersize=6, label="Initial",color="C5", alpha=0.5)
     plt.plot(modesGD,data['accumGD'],marker='s', linestyle='None', markersize=3, label="Adam",color="C1")
-    plt.plot(modesLSGD,data['accumLSGD'],marker='^', linestyle='None', markersize=2, label="LS/Adam",color="C0")
+    plt.plot(modesLSGD,data['accumLSGD'],marker='^', linestyle='None', markersize=3, label="LS/Adam",color="C0")
     plt.ylabel(r"$\sum_{s=1}^m \{b(u^{\boldsymbol{\alpha},\boldsymbol{\omega}},v_s)-l(v_s)\}^2$", labelpad=10)
     plt.xlabel(r"$m$")
     plt.xscale("log", base=2)
     plt.yscale("log")
     plt.axvline(x=M, color='black', linestyle='--', label=rf"cut-off $M={M}$")
     plt.legend()
-    plt.title(r"Accumulated spectrum of $r(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})$")
+    plt.title(r"Accumulated spectral coefficients of $r(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})$")
     figures.append(plt.gcf())
     plt.show()
     
@@ -345,6 +351,7 @@ def save_and_plot_loss(history, file=False):
     plt.yscale("log")
     plt.ylabel(r"$\mathcal{L}(\boldsymbol{\alpha},\boldsymbol{\omega}) \quad \text{and} \quad \Vert e(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})\Vert_{H^1_0(\Omega)}^2$", labelpad=10)
     plt.xlabel("Iteration")
+    plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(thousands_formatter))
     plt.legend()
     plt.title("Training history")
     figures.append(plt.gcf())

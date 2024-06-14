@@ -38,7 +38,7 @@ SAMPLING = "exponential"
 LEARNING_RATE = 10**(-3)
 EPOCHS = 1000
 XPLOT = "tf.convert_to_tensor(np.expand_dims(np.linspace(A+10**(-4), B, num=1000), axis=1))"
-LEGEND_LOCATION = "lower left"
+LEGEND_LOCATION = "best"
 
 global_variables = [EXPERIMENT_REFERENCE,
                     RESULTS_FOLDER,
