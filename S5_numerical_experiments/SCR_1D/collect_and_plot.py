@@ -48,41 +48,15 @@ def auto_format_y_axis():
             scale_factor = 10 ** -exponent
             
             # Set the formatter for the y-axis
-            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda val, pos: f'{val * scale_factor:.2f}'))
+            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda val, pos: f'{val * scale_factor:.1f}'))
             
             # Add the scale label above the y-axis
             ax.text(0.01, 1.01, r'$\times 10^{{{}}}$'.format(exponent), transform=ax.transAxes, ha='left', va='bottom')
-            
-def auto_format_each_y_axis(ax, color, side="left"):
-    # Get the current y-axis limits
-    y_min, y_max = ax.get_ylim()
-    
-    # Check if y-axis limits are in the form of small decimal values
-    if abs(y_min) < 1 and abs(y_max) < 1 and y_min != y_max:
-        exponent = int(np.floor(np.log10(max(abs(y_min), abs(y_max)))))
-        
-        # Only apply the formatting if the exponent is in the range we care about
-        if exponent < 0:
-            scale_factor = 10 ** -exponent
-            
-            # Set the formatter for the y-axis
-            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda val, pos: f'{val * scale_factor:.2f}'))
-            
-            # Add the scale label above the y-axis in the correct position and color
-            if side == 'left':
-                ax.yaxis.set_label_coords(-0.1, 1.02)
-                ax.text(-0.1, 1.02, r'$\times 10^{{{}}}$'.format(exponent), transform=ax.transAxes, ha='center', va='bottom', color=color, fontsize=12)
-            elif side == 'right':
-                ax.yaxis.set_label_coords(1.1, 1.02)
-                ax.text(1.1, 1.02, r'$\times 10^{{{}}}$'.format(exponent), transform=ax.transAxes, ha='center', va='bottom', color=color, fontsize=12)
                 
 # Define the formatter function
 def thousands_formatter(x, pos):
     return f'{x:,.0f}'
 
-
-
-    
 
 def save_and_plot_net(x, nets, file=False):
     
@@ -345,11 +319,11 @@ def save_and_plot_loss(history, file=False):
     plt.figure(figsize=(plot_width, plot_height))
     plt.plot(iterations, history["lossGD"],label=r"$\mathcal{L}(\boldsymbol{\alpha},\boldsymbol{\omega})$ Adam", color="C1",lw=3, alpha=0.5)
     plt.plot(iterations, history["lossLSGD"],label=r"$\mathcal{L}(\boldsymbol{\alpha},\boldsymbol{\omega})$ LS/Adam", color="C0",lw=3, alpha=0.5)
-    plt.plot(iterations, history["error2GD"],label=r"$\Vert e(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})\Vert_{H^1_0(\Omega)}^2$ Adam", color="red", linestyle="--", lw=1)
-    plt.plot(iterations, history["error2LSGD"],label=r"$\Vert e(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})\Vert_{H^1_0(\Omega)}^2$ LS/Adam", color="purple", linestyle="--", lw=1)
+    plt.plot(iterations, history["error2GD"],label=r"$\Vert e(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})\Vert_{\mathbb{U}}^2$ Adam", color="red", linestyle="--", lw=1)
+    plt.plot(iterations, history["error2LSGD"],label=r"$\Vert e(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})\Vert_{\mathbb{U}}^2$ LS/Adam", color="purple", linestyle="--", lw=1)
     #plt.xscale("log")
     plt.yscale("log")
-    plt.ylabel(r"$\mathcal{L}(\boldsymbol{\alpha},\boldsymbol{\omega}) \quad \text{and} \quad \Vert e(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})\Vert_{H^1_0(\Omega)}^2$", labelpad=10)
+    plt.ylabel(r"$\mathcal{L}(\boldsymbol{\alpha},\boldsymbol{\omega}) \quad \text{and} \quad \Vert e(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})\Vert_{\mathbb{U}}^2$", labelpad=10)
     plt.xlabel("Iteration")
     plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(thousands_formatter))
     plt.legend()

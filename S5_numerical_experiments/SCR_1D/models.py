@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-<<<<<<< HEAD
 Last edited on May, 2024
 
 @author: curiarteb
 """
 
-from config import A,B,N,M,K,KTEST,SOURCE,EXACT,IMPLEMENTATION
+from config import A,B,N,M,KTEST,SOURCE,EXACT,IMPLEMENTATION
 from SCR_1D.integration import integration_points_and_weights
-from scipy.integrate import quad
 import os, tensorflow as tf, numpy as np
 os.environ["KERAS_BACKEND"] = "tensorflow"
 import keras
@@ -158,7 +156,7 @@ class residual(keras.Model):
         self.net = net
         self.f = SOURCE
         self.test = test_functions()
-        self.integration_data = integration_points_and_weights(threshold=K)
+        self.integration_data = integration_points_and_weights(threshold=KTEST)
         self.spectrum_test = test_functions(spectrum_size=1024)
         self.spectrum_integration_data = integration_points_and_weights(threshold = 32*8*1024)
         

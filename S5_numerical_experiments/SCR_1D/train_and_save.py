@@ -10,7 +10,7 @@ from SCR_1D.models import u_net
 from SCR_1D.loss import loss_GDandLSGD
 from SCR_1D.collect_and_plot import save_and_plot_net, save_and_plot_spectrum, save_and_plot_loss
 from SCR_1D.callbacks import EndOfTrainingLS
-from config import RESULTS_FOLDER, EXPERIMENT_REFERENCE, EPOCHS, XPLOT
+from config import RESULTS_FOLDER, EXPERIMENT_REFERENCE, EPOCHS, XPLOT, KTEST
 
 x = XPLOT
 
@@ -36,7 +36,7 @@ print("########################")
 print()
 loss = loss_GDandLSGD(netGD, netLSGD)
 loss.compile()
-training = loss.fit(x, epochs=EPOCHS, batch_size=1000, callbacks=[EndOfTrainingLS()])
+training = loss.fit(x, epochs=EPOCHS, batch_size=KTEST, callbacks=[EndOfTrainingLS()])
 
 print()
 print("########################")

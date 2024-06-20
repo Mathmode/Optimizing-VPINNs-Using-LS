@@ -1,178 +1,166 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sun Oct 22 19:56:57 2023
+Last edited on June, 2024
 
-@author: Manuela Bastidas
+@author: curiarteb
 """
 
+from config import K1,K2,KTEST1,KTEST2,SOURCE, EXACT, EXACT_NORM2, IMPLEMENTATION, LEARNING_RATE
+from SCR_2D.integration import integration_points_and_weights
+from SCR_2D.models import error, test_functions
 import tensorflow as tf
-import numpy as np
+import os
+os.environ["KERAS_BACKEND"] = "tensorflow"
+import keras
+dtype='float64' 
+keras.mixed_precision.set_dtype_policy(dtype) 
 
+class loss_GDandLSGD(keras.Model):
+    
+    # For GD, we only invoke the 'call'
+    
+    # For LS, we need to invoke:
+    # (Step 1) 'construct_LHMandRHV',
+    # (Step 2) 'optimal_computable_vars', and
+    # (Step 3b) 'call'.
+    
+    def __init__(self, netGD, netLSGD, **kwargs):
+        super(loss_GDandLSGD, self).__init__()
+        
+        self.test = test_functions()
+        self.f = SOURCE
+        self.exact = EXACT
+        
+        # First version of the neural network
+        self.netGD = netGD
+        self.errorGD = error(netGD)
+        
+        # A copy of the neural network for the LSGD training
+        self.netLSGD = netLSGD
+        self.errorLSGD = error(netLSGD)
+        
+        # Weights for the GD-based optimization for 'netLSGD'
+        self.trainable_varsGD = [v.value for v in self.netGD.weights]
+        self.trainable_varsLSGD = [v.value for v in self.netLSGD.weights[:-1]]
+        # Weights for the LS computations for 'netLSGD'
+        self.computable_varsLSGD = self.netLSGD.weights[-1].value
+        
+        # Data generators:
+        self.train_data = integration_points_and_weights(threshold=[K1,K2])
+        self.test_data = integration_points_and_weights(threshold=[KTEST1,KTEST2])
+        
+    def build(self, input_shape):
+        super(loss_GDandLSGD, self).build(input_shape)
+    
+    def construct_LHMandRHV(self, data):
+        
+        x,y,w = data
+        inputs = [x,y]
 
-from SCR.integration import integration_points_and_weights
-
-# =============================================================================
-# The DFR loss function
-# weak implementation
-# =============================================================================
-
-class weak_loss(tf.keras.layers.Layer):
-    def __init__(self,u_model,n_pts,n_modes,f,nrules,dtype='float64',**kwargs):
-        super(weak_loss,self).__init__()
+        # Right-hand side vector construction
+        v = self.test.falsecall(inputs)
+        #v = self.test(inputs)
+        f = self.f(x,y)
+        self.l = tf.einsum("kr,kr,km->mr", w, f, v)
         
-        self.u_model = u_model
-        
-        # The domain is (0,pi) by default,include as input is the domain change
-        b = np.pi
-        a = 0
-        lenx = b-a
-        
-        self.num_rules = nrules #negative number indicates a fix rule DST/DCT
-        self.select = tf.Variable(0,dtype='int32')
-        
-        # Generate integration points
-        pts, W = integration_points_and_weights(a,b,n_pts,self.num_rules,1)
-        self.pts = tf.constant(pts)
+        # Left-hand side bilinear-form matrix construction
+        if IMPLEMENTATION == "weak":
+            duX, duY = self.netLSGD.dfwd_vect(inputs)
+            dvX, dvY = self.test.falsegradient(inputs)
+            #dvX, dvY = self.test.gradient(inputs)
+            wduXdvX = tf.einsum("kr,kn,km->mn", w, duX, dvX)
+            wduYdvY = tf.einsum("kr,kn,km->mn", w, duY, dvY)
+            self.B = wduXdvX + wduYdvY
+                
+        elif IMPLEMENTATION == "ultraweak":
+            u = self.netLSGD.call_vect(inputs)
+            laplacianv = self.test.falselaplacian(inputs)
+            #laplacianv = self.test.laplacian(inputs)
+            self.B = tf.einsum("kr,kn,km->mn", w, -u, laplacianv)
             
-        V = np.sqrt(2./lenx)
-        self.DST = tf.constant(np.swapaxes([V*np.sin(np.pi*k*(self.pts-a)/lenx)*W
-                                                for k in range(1,n_modes+1)], 0, 1))
+        return self.B, self.l
+    
+    # Solve the LS system of linear equations with l2 regularization
+    def optimal_computable_vars(self, regularizer = 10**(-8)):
+        
+        weights_optimal = tf.linalg.lstsq(self.B, self.l, l2_regularizer=regularizer)
+        self.computable_varsLSGD.assign(weights_optimal)
+        
+        return weights_optimal
+        
+    # Compute || B w - l ||^2 given B, w and l
+    def from_LHMandRHV_to_loss(self):
+        residual = self.B @ self.net.weights[-1] - self.l
+        loss = tf.reduce_sum(residual**2)
+        
+        return loss
+    
+    # This is the ordinary DFR loss evaluation that does not pass throughout the matrix construction 
+    def call(self, data):
+        
+        x,y,w = data
+        inputs = [x,y]
+
+        v = self.test.falsecall(inputs)
+        #v = self.test(inputs)
+        f = self.f(x,y)
+        RHV = tf.einsum("kr,kr,km -> mr", w, f, v)
+        
+        
+        if IMPLEMENTATION == "weak":
+            duX_GD, duY_GD = self.netGD.dbwd(inputs)
+            dvX, dvY = self.test.falsegradient(inputs)
+            #dvX, dvY = self.test.gradient(inputs)
+            wduXdvX_GD = tf.einsum("kr,kr,km->mr", w, duX_GD, dvX)
+            wduYdvY_GD = tf.einsum("kr,kr,km->mr", w, duY_GD, dvY)
+            LHV_GD = wduXdvX_GD + wduYdvY_GD
             
-        self.DCT = tf.constant(np.swapaxes([V*(k*np.pi/lenx)*np.cos(np.pi*k*(self.pts-a)/lenx)*W
-                                             for k in range(1, n_modes+1)], 0, 1))
-        
-        # Generate weights based on H^1_0 norm with no L2 component
-        self.coeffs = np.array([(lenx/(np.pi*k)) for k in range(1,n_modes+1)])
-
-        self.f = f
-       
-    def call(self,inputs):
-        
-        if self.num_rules>0:
-            self.select.assign((self.select+1)%self.num_rules)
-        
-        x = self.pts[self.select]
-        
-        # Evaluate u and its derivative at integration points
-        ## Persistent True not necessary because it only evaluates u'(once)
-        with tf.GradientTape() as t1:
-            t1.watch(x)
-            u = self.u_model(x)
-        du = t1.gradient(u,x)
-        del t1
-
-        ## The LHS of the loss function
-        FT_high = tf.einsum("ji,i->j",self.DCT[self.select],du)
-        
-        # The RHS of the loss function
-        FT_low = tf.einsum("ji,i->j",self.DST[self.select],self.f(x))
-
-        ## Add and multiply by weighting factors
-        FT_tot = (FT_high+FT_low)*self.coeffs
-        
-        # Loss calculation
-        return tf.reduce_sum(FT_tot**2)
-    
-# =============================================================================
-# The DFR loss function
-# weak implementation
-# =============================================================================
-
-class ultraweak_loss(tf.keras.layers.Layer):
-    def __init__(self,u_model,n_pts,n_modes,f,nrules,dtype='float64',**kwargs):
-        super(ultraweak_loss,self).__init__()
-    
-        self.u_model = u_model
-        
-        # The domain is (0,pi) by default,include as input is the domain change
-        b = np.pi
-        a = 0
-        lenx = b-a
-        
-        self.num_rules = nrules #negative number indicates a fix rule DST/DCT
-        self.select = tf.Variable(0,dtype='int64')
-        
-        # Generate integration points
-        pts, W = integration_points_and_weights(a,b,n_pts,self.num_rules,1)
-        self.pts = tf.constant(pts)
+            duX_LSGD, duY_LSGD = self.netLSGD.dbwd(inputs)
+            wduXdvX_LSGD = tf.einsum("kr,kr,km->mr", w, duX_LSGD, dvX)
+            wduYdvY_LSGD = tf.einsum("kr,kr,km->mr", w, duY_LSGD, dvY)
+            LHV_LSGD = wduXdvX_LSGD + wduYdvY_LSGD
+                
+        elif IMPLEMENTATION == "ultraweak":
+            uGD = self.netGD(inputs)
+            uLSGD = self.netLSGD(inputs)
+            laplacianv = self.test.falselaplacian(inputs)
+            #laplacianv = self.test.laplacian(inputs)
+            LHV_GD = tf.einsum("kr,kr,km->mr", w, -uGD, laplacianv)
+            LHV_LSGD = tf.einsum("kr,kr,km->mr", w, -uLSGD, laplacianv)
             
-        V = np.sqrt(2./lenx)
-        self.DST = tf.constant(np.swapaxes([V*np.sin(np.pi*k*(self.pts-a)/lenx)*W
-                                                for k in range(1,n_modes+1)], 0, 1))
-            
-        #self.DCT = tf.constant(np.swapaxes([V*(k*np.pi/lenx)*np.cos(np.pi*k*(self.pts-a)/lenx)*W
-        #                                     for k in range(1, n_modes+1)], 0, 1))
-        
-        # Generate weights based on H^1_0 norm with no L2 component
-        self.coeffs = np.array([(lenx/(np.pi*k)) for k in range(1,n_modes+1)])
-        
-        # Laplacian constant (eigenvalue)
-        self.laplac =  np.array([((np.pi*k)/lenx)
-                                for k in range(1, n_modes+1)]) 
-
-        self.f = f
-       
-    def call(self,inputs):
-        
-        if self.num_rules>0:
-            self.select.assign((self.select+1)%self.num_rules)
-        
-        x = self.pts[self.select]
-        
-        # Evaluating the model
-        u = self.u_model(x)
-
-        ## Take appropriate transforms of each component
-        FT_high = tf.einsum("ji,i->j",self.DST[self.select],u)*self.laplac
-        
-        # The RHS of the loss function
-        FT_low = tf.einsum("ji,i->j",self.DST[self.select],self.f(x))* self.coeffs
+        return tf.reduce_sum(tf.square(LHV_GD - RHV)), tf.reduce_sum(tf.square(LHV_LSGD - RHV))
     
-        ##Return the loss function 
-        return tf.reduce_sum((FT_high+FT_low)**2)
-
+    def compile(self):
+        super().compile()
+        
+        self.optimizerGD = keras.optimizers.Adam(learning_rate=LEARNING_RATE)
+        self.optimizerLSGD = keras.optimizers.Adam(learning_rate=LEARNING_RATE)
     
-## DFR loss function ( loss into layer )
-#Import solution model
-class error(tf.keras.layers.Layer):
-    def __init__(self,u_model,n_pts,du_exact,dtype='float64',**kwargs):
-        super(error,self).__init__()
+    def train_step(self, data):
         
-        self.u_model = u_model
+        inputs_train = self.train_data()
+        xtrain, ytrain, wtrain = inputs_train
+        xtest, ytest, wtest =  self.test_data()
+        inputs_test = xtest, ytest
         
-        # The domain is (0,pi) by default,include as input is the domain change
-        b = np.pi
-        #a = 0
+        self.construct_LHMandRHV(inputs_train)
+        self.optimal_computable_vars()
         
-        # Generate integration points
-        pts, W = integration_points_and_weights(0,b,n_pts,1,1)
-        self.eval_pts = tf.constant(pts[0])
-        self.diff = W
-        
-        # Exact derivative
-        self.du_exact = du_exact(self.eval_pts)
 
-        ## H01 norm of exact solution (IN CASE RELATIVE - Change last line)
-        # Ideally not calculated in smooth cases to see one to one relation
-        # loss vs error
-        self.H01norm = tf.reduce_sum(self.du_exact**2*self.diff)
-       
-    def call(self,inputs):
+        deGDX, deGDY = self.errorGD.d(inputs_test)
+        deLSGDX, deLSGDY = self.errorLSGD.d(inputs_test)
         
-        ## Evaluate u and its derivative at integration points
-        ## Persistent True not necessary because it only evaluates u'(once)
-        with tf.GradientTape() as t1:
-              t1.watch(self.eval_pts)
-              u  = self.u_model(self.eval_pts)
-        du = t1.gradient(u,self.eval_pts)
-        del t1
+        errorGD = tf.reduce_sum(wtest * (tf.square(deGDX)+tf.square(deGDY)))
+        errorLSGD = tf.reduce_sum(wtest * (tf.square(deLSGDX)+tf.square(deLSGDY)))
         
-        # The error in the norm H0_1
-        H01err = tf.reduce_sum((du-self.du_exact)**2*self.diff)
-        #L2ERROR = tf.reduce_sum((u-self.u_exact)**2*self.diff)
+        # Optimize netGD and netLSGD
+        with tf.GradientTape(watch_accessed_variables=False, persistent=True) as tape:
+            tape.watch([self.trainable_varsGD, self.trainable_varsLSGD])
+            lossGD, lossLSGD = self(inputs_train)
+        dGD = tape.gradient(lossGD, self.trainable_varsGD)
+        dLSGD = tape.gradient(lossLSGD, self.trainable_varsLSGD)
+        self.optimizerGD.apply(dGD, self.trainable_varsGD)
+        self.optimizerLSGD.apply(dLSGD, self.trainable_varsLSGD)
         
-        #exact_norm = np.sqrt(11.3759)
-        # aa = tf.abs(self.H01norm**0.5-np.sqrt(11.3759))/np.sqrt(11.3759)*100
-    
-        return H01err**0.5  #tf.abs(self.H01norm**0.5 -exact_norm)/exact_norm 
+        return {"lossGD": lossGD, "lossLSGD": lossLSGD, "error2GD": errorGD, "error2LSGD": errorLSGD, "rel_errorGD": tf.sqrt(errorGD/EXACT_NORM2), "rel_errorLSGD": tf.sqrt(errorLSGD/EXACT_NORM2)}

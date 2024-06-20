@@ -38,7 +38,7 @@ IMPLEMENTATION = "ultraweak"
 SAMPLING = "uniform"
 LEARNING_RATE = 10**(-3)
 EPOCHS = 1000
-XPLOT = "tf.convert_to_tensor(np.expand_dims(np.linspace(A, B, num=1000), axis=1))"
+XPLOT = f"tf.convert_to_tensor(np.expand_dims(np.linspace(A, B, num={KTEST}), axis=1))"
 LEGEND_LOCATION = "best"
 
 global_variables = [EXPERIMENT_REFERENCE,

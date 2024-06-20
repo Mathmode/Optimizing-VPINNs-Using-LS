@@ -37,8 +37,8 @@ def execute_scripts(script_list):
             print(f"An unexpected error occurred while executing {script}: {e}")
 
 script_list = [
-    #'S52weak.py', 'S52ultraweak.py',
-    #'S53weak.py', 'S53ultraweak.py', 'S53weak_moreiterations.py',
+    'S52weak.py', 'S52ultraweak.py',
+    'S53weak.py', 'S53ultraweak.py', 'S53weak_moreiterations.py',
     'S54weak_M32.py', 'S54ultraweak_M32.py',
     'S54weak_M64.py', 'S54ultraweak_M64.py',
     'S54weak_M128.py', 'S54ultraweak_M128.py',
