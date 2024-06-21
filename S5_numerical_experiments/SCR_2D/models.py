@@ -6,7 +6,7 @@ Last edited on June, 2024
 @author: curiarteb
 """
 
-from config import A,B,N,M1,M2,KTEST1,KTEST2,SOURCE,EXACT,IMPLEMENTATION
+from config import A,B,N,M1,M2,SOURCE,EXACT,IMPLEMENTATION
 from SCR_2D.integration import integration_points_and_weights
 import os, tensorflow as tf, numpy as np
 os.environ["KERAS_BACKEND"] = "tensorflow"
@@ -118,12 +118,6 @@ class test_functions(keras.Model):
         self.ddevalXX = lambda x,y: keras.ops.concatenate([-2*m1**2/(np.pi*np.sqrt(m1**2+m2**2))*keras.ops.sin(m1*np.pi*(x-A)/(B-A))*keras.ops.sin(m2*np.pi*(y-A)/(B-A)) for m1 in range(1, self.M1+1) for m2 in range(1, self.M2+1)], axis=1) # dsinesY normalized  in H10
         self.ddevalYY = lambda x,y: keras.ops.concatenate([-2*m2**2/(np.pi*np.sqrt(m1**2+m2**2))*keras.ops.sin(m1*np.pi*(x-A)/(B-A))*keras.ops.sin(m2*np.pi*(y-A)/(B-A)) for m1 in range(1, self.M1+1) for m2 in range(1, self.M2+1)], axis=1) # dsinesY normalized  in H10
         
-        self.falseeval = lambda x,y: keras.ops.concatenate([2*keras.ops.sin(m1*np.pi*(x-A)/(B-A))*keras.ops.sin(m2*np.pi*(y-A)/(B-A)) for m1 in range(1, self.M1+1) for m2 in range(1, self.M2+1)], axis=1) # sines normalized in H10
-        self.falsedevalX = lambda x,y: keras.ops.concatenate([2*m1*np.pi/(B-A)*keras.ops.cos(m1*np.pi*(x-A)/(B-A))*keras.ops.sin(m2*np.pi*(y-A)/(B-A)) for m1 in range(1, self.M1+1) for m2 in range(1, self.M2+1)], axis=1) # dsinesX normalized  in H10
-        self.falsedevalY = lambda x,y: keras.ops.concatenate([2*m2*np.pi/(B-A)*keras.ops.sin(m1*np.pi*(x-A)/(B-A))*keras.ops.cos(m2*np.pi*(y-A)/(B-A)) for m1 in range(1, self.M1+1) for m2 in range(1, self.M2+1)], axis=1) # dsinesY normalized  in H10
-        self.falseddevalXX = lambda x,y: keras.ops.concatenate([-2*m1**2*np.pi**2/(B-A)**2*keras.ops.sin(m1*np.pi*(x-A)/(B-A))*keras.ops.sin(m2*np.pi*(y-A)/(B-A)) for m1 in range(1, self.M1+1) for m2 in range(1, self.M2+1)], axis=1) # dsinesY normalized  in H10
-        self.falseddevalYY = lambda x,y: keras.ops.concatenate([-2*m2**2*np.pi**2/(B-A)**2*keras.ops.sin(m1*np.pi*(x-A)/(B-A))*keras.ops.sin(m2*np.pi*(y-A)/(B-A)) for m1 in range(1, self.M1+1) for m2 in range(1, self.M2+1)], axis=1) # dsinesY normalized  in H10 
-        
     # Evaluation of the test functions
     def call(self, inputs):
         x,y=inputs
@@ -138,21 +132,6 @@ class test_functions(keras.Model):
     def laplacian(self, inputs):
         x,y=inputs
         return self.ddevalXX(x,y) + self.ddevalYY(x,y)
-    
-    # Evaluation of the test functions
-    def falsecall(self, inputs):
-        x,y=inputs
-        return self.falseeval(x,y)
-    
-    # Evaluation of the spatial gradient of the test functions
-    def falsegradient(self, inputs):
-        x,y=inputs
-        return [self.falsedevalX(x,y), self.falsedevalY(x,y)]
-    
-    # Evaluation of the spatial laplacian of the test functions
-    def falselaplacian(self, inputs):
-        x,y=inputs
-        return self.falseddevalXX(x,y) + self.falseddevalYY(x,y)
     
     
 class residual(keras.Model):
@@ -230,4 +209,19 @@ class residual(keras.Model):
         modesY = np.array([m2 for m1 in range(1, 65) for m2 in range(1, 65)])
         
         return modesX, modesY, positive_projection_coeff.numpy().flatten()
+    
+    def spectrum_in_out(self, modesX, modesY, coeff):
+        
+
+        in_mask = (modesX <= M1) & (modesY <= M2)
+        out_mask = (modesX > M1) | (modesY > M2)
+        
+        
+        value_in = np.sum(coeff[in_mask])
+        value_out = np.sum(coeff[out_mask])
+        value_total = value_in + value_out
+        
+        return value_in, value_out, value_total
+
+        
  

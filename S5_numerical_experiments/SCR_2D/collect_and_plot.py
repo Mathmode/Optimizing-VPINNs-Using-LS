@@ -35,6 +35,11 @@ plt.rcParams.update({
 def thousands_formatter(x, pos):
     return f'{x:,.0f}'
 
+def format_custom_scientific(value):
+    # Format value in custom scientific notation: number.onedecimal \times 10^{exponent}
+    mantissa, exponent = "{:.1e}".format(value).split('e')
+    return r"{:.1f} \times 10^{{{}}}".format(float(mantissa), int(exponent))
+
 
 def auto_format_colorbar(p, label=None):
     
@@ -59,11 +64,11 @@ def auto_format_colorbar(p, label=None):
             # Add the scale label above the colorbar
             scale_label = r'$\times 10^{{{}}}$'.format(exponent)
             # originally, 0.5 and 1.05
-            cbar.ax.text(0.7, 1.03, scale_label, transform=cbar.ax.transAxes, ha='center', va='bottom')
+            cbar.ax.text(1, 1.02, scale_label, transform=cbar.ax.transAxes, ha='center', va='bottom')
             
             # Add the additional label parallel to the right of the colorbar
     if label != None:
-        cbar.set_label(label, labelpad=20)
+        cbar.set_label(label, labelpad=15)
 
 def rescale_colorbar(c, colorbar_label):
     z_min, z_max = np.min(c.get_array()), np.max(c.get_array())
@@ -91,7 +96,7 @@ def rescale_colorbar(c, colorbar_label):
         # Default tick format for integers and non-rescaled values
         colorbar.ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{int(x)}' if x == int(x) else f'{x:.1f}'))
     
-    colorbar.set_label(colorbar_label, labelpad=15)
+    colorbar.set_label(colorbar_label, labelpad=10)
     colorbar.update_ticks()
     
     return colorbar
@@ -157,7 +162,7 @@ def save_and_plot_net(x, y, nets, file=False):
     plt.figure(figsize=(plot_width, plot_height))
     p = plt.scatter(x,y,c=exact_out,cmap="viridis",alpha=0.7)
     auto_format_colorbar(p, r"$u^*$")
-    plt.xlabel(r"$x$", labelpad=0)
+    plt.xlabel(r"$x$", labelpad=5)
     plt.ylabel(r"$y$", labelpad=15)
     plt.title("Exact solution")
     figures.append(plt.gcf())
@@ -166,7 +171,7 @@ def save_and_plot_net(x, y, nets, file=False):
     plt.figure(figsize=(plot_width, plot_height))
     p = plt.scatter(x,y,c=netGD_out,cmap="viridis",alpha=0.7)
     auto_format_colorbar(p, r"$u^{\boldsymbol{\alpha},\boldsymbol{\omega}}$")
-    plt.xlabel(r"$x$", labelpad=0)
+    plt.xlabel(r"$x$", labelpad=5)
     plt.ylabel(r"$y$", labelpad=15)
     plt.title("Prediction (Adam)")
     figures.append(plt.gcf())
@@ -175,7 +180,7 @@ def save_and_plot_net(x, y, nets, file=False):
     plt.figure(figsize=(plot_width, plot_height))
     p = plt.scatter(x,y,c=netLSGD_out,cmap="viridis",alpha=0.7)
     auto_format_colorbar(p, r"$u^{\boldsymbol{\alpha},\boldsymbol{\omega}}$")
-    plt.xlabel(r"$x$", labelpad=0)
+    plt.xlabel(r"$x$", labelpad=5)
     plt.ylabel(r"$y$", labelpad=15)
     plt.title("Prediction (LS/Adam)")
     figures.append(plt.gcf())
@@ -184,7 +189,7 @@ def save_and_plot_net(x, y, nets, file=False):
     plt.figure(figsize=(plot_width, plot_height))
     p = plt.scatter(x,y,c=errorGD_out,cmap="viridis",alpha=0.7)
     auto_format_colorbar(p, r"$e(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})$")
-    plt.xlabel(r"$x$", labelpad=0)
+    plt.xlabel(r"$x$", labelpad=5)
     plt.ylabel(r"$y$", labelpad=15)
     plt.title("Error (Adam)")
     figures.append(plt.gcf())
@@ -193,7 +198,7 @@ def save_and_plot_net(x, y, nets, file=False):
     plt.figure(figsize=(plot_width, plot_height))
     p = plt.scatter(x,y,c=errorLSGD_out,cmap="viridis",alpha=0.7)
     auto_format_colorbar(p, r"$e(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})$")
-    plt.xlabel(r"$x$", labelpad=0)
+    plt.xlabel(r"$x$", labelpad=5)
     plt.ylabel(r"$y$", labelpad=15)
     plt.title("Error (LS/Adam)")
     figures.append(plt.gcf())
@@ -203,7 +208,7 @@ def save_and_plot_net(x, y, nets, file=False):
     plt.figure(figsize=(plot_width, plot_height))
     p = plt.scatter(x,y,c=data['derrorGD'],cmap="viridis",alpha=0.7)
     auto_format_colorbar(p, r"$\vert \; \nabla e(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})\; \vert$")
-    plt.xlabel(r"$x$", labelpad=0)
+    plt.xlabel(r"$x$", labelpad=5)
     plt.ylabel(r"$y$", labelpad=15)
     plt.title("Gradient of the error (Adam)")
     figures.append(plt.gcf())
@@ -212,7 +217,7 @@ def save_and_plot_net(x, y, nets, file=False):
     plt.figure(figsize=(plot_width, plot_height))
     p = plt.scatter(x,y,c=data['derrorLSGD'],cmap="viridis",alpha=0.7)
     auto_format_colorbar(p, r"$\vert \; \nabla e(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})\; \vert$")
-    plt.xlabel(r"$x$", labelpad=0)
+    plt.xlabel(r"$x$", labelpad=5)
     plt.ylabel(r"$y$", labelpad=15)
     plt.title("Gradient of the error (LS/Adam)")
     figures.append(plt.gcf())
@@ -231,30 +236,38 @@ def save_and_plot_spectrum(nets, file=False):
     if netINI != None:
         residualINI = residual(netINI)
         modesINIX, modesINIY, spectrumINI_out = residualINI.spectrum()
+        value_inINI, value_outINI, value_totalINI = residualINI.spectrum_in_out(modesINIX, modesINIY, spectrumINI_out)
         
         data['modesX'] = modesINIX
         data['modesY'] = modesINIY
         data['coeffINI'] = spectrumINI_out
-        data['accumINI'] = np.cumsum(spectrumINI_out)
+        data['accumINIinside'] = value_inINI
+        data['accumINIoutside'] = value_outINI
+        data['accumINIototal'] = value_totalINI
     
     if netGD != None:
         residualGD = residual(netGD)
         modesGDX, modesGDY, spectrumGD_out = residualGD.spectrum()
+        value_inGD, value_outGD, value_totalGD = residualINI.spectrum_in_out(modesGDX, modesGDY, spectrumGD_out)
         
         data['modesX'] = modesGDX
         data['modesY'] = modesGDY
         data['coeffGD'] = spectrumGD_out
-        data['accumGD'] = np.cumsum(spectrumGD_out)
-        
+        data['accumGDinside'] = value_inGD
+        data['accumGDoutside'] = value_outGD
+        data['accumGDototal'] = value_totalGD
         
     if netGD != None:
         residualLSGD = residual(netLSGD)
         modesLSGDX, modesLSGDY, spectrumLSGD_out = residualLSGD.spectrum()
+        value_inLSGD, value_outLSGD, value_totalLSGD = residualLSGD.spectrum_in_out(modesLSGDX, modesLSGDY, spectrumLSGD_out)
         
         data['modesX'] = modesLSGDX
         data['modesY'] = modesLSGDY
         data['coeffLSGD'] = spectrumLSGD_out
-        data['accumLSGD'] = np.cumsum(spectrumLSGD_out)
+        data['accumLSGDinside'] = value_inLSGD
+        data['accumLSGDoutside'] = value_outLSGD
+        data['accumLSGDototal'] = value_totalLSGD
     
     
     if file:
@@ -264,101 +277,64 @@ def save_and_plot_spectrum(nets, file=False):
     plot_width, plot_height = 6.4, 4.8
     
     plt.figure(figsize=(plot_width, plot_height))
-    
-    # Scatter plot with logarithmic color scaling
-    p = plt.scatter(modesINIX, modesINIY, c=spectrumGD_out/spectrumINI_out, cmap="inferno", alpha=0.7, norm=LogNorm())
-    
-    # Colorbar with logarithmic ticks
-    cbar = plt.colorbar(p, format=ticker.LogFormatter(labelOnlyBase=False))
-    #cbar.set_label(r"$\{b(u^{\boldsymbol{\alpha},\boldsymbol{\omega}},v_{m_1,m_2})-l(v_{m_1,m_2})\}^2$", labelpad=10)
-    
-    # Set custom ticks formatter for the colorbar
-
-    
+    p = plt.scatter(modesINIX, modesINIY, c=spectrumINI_out, cmap="inferno", alpha=0.7, norm=LogNorm())
+    cbar = plt.colorbar(p, format=ticker.LogFormatter(labelOnlyBase=False))   
     cbar.ax.yaxis.set_major_formatter(LogFormatterSciNotation())
-    
-    # Set logarithmic scaling for x and y axes
+    cbar.set_label(r"$\{b(u^{\boldsymbol{\alpha},\boldsymbol{\omega}},v_{m_1,m_2})-l(v_{m_1,m_2})\}^2$", labelpad=15)
     plt.xscale("log", base=2)
     plt.yscale("log", base=2)
-    
-    # Set labels for axes
     plt.xlabel(r"$m_1$\; ($x$-axis)", labelpad=10)
     plt.ylabel(r"$m_2$\; ($y$-axis)", labelpad=15)
-    plt.axvline(x=M1, color='black', linestyle='--', label=rf'x-cutoff $M_1 = {M1}$')
-    plt.axhline(y=M2, color='black', linestyle=':', label=rf'y-cutoff $M_2 = {M2}$')
-    #plt.legend(loc="upper right")
-    plt.title(r"Ratios of spectral coefficients: $\frac{Adam}{Initial}$",pad=10)
+    plt.title(r"Spectral coefficients (Initial)",pad=10)
+    plt.plot([0, M1], [M2, M2], color='black', linestyle='--', label=rf'cutoff $M_1, M_2 = {M1}, {M2}$')
+    plt.plot([M1, M1], [0, M2], color='black', linestyle='--')
+    formatted_value_in = format_custom_scientific(value_inINI)
+    formatted_value_out = format_custom_scientific(value_outINI)
+    plt.plot([0], [0], linestyle='', label=rf"inside $= {formatted_value_in}$")
+    plt.plot([0], [0], linestyle='', label=rf"outside $= {formatted_value_out}$")
+    plt.legend(loc='upper right')
     figures.append(plt.gcf())
     plt.show()
     
     plt.figure(figsize=(plot_width, plot_height))
-    
-    # Scatter plot with logarithmic color scaling
-    p = plt.scatter(modesINIX, modesINIY, c=spectrumLSGD_out/spectrumINI_out, cmap="inferno", alpha=0.7, norm=LogNorm())
-    
-    # Colorbar with logarithmic ticks
-    cbar = plt.colorbar(p, format=ticker.LogFormatter(labelOnlyBase=False))
-    #cbar.set_label(r"$\{b(u^{\boldsymbol{\alpha},\boldsymbol{\omega}},v_{m_1,m_2})-l(v_{m_1,m_2})\}^2$", labelpad=10)
-    
-    # Set custom ticks formatter for the colorbar
-
-    
+    p = plt.scatter(modesGDX, modesGDY, c=spectrumGD_out, cmap="inferno", alpha=0.7, norm=LogNorm())
+    cbar = plt.colorbar(p, format=ticker.LogFormatter(labelOnlyBase=False))   
     cbar.ax.yaxis.set_major_formatter(LogFormatterSciNotation())
-    
-    # Set logarithmic scaling for x and y axes
+    cbar.set_label(r"$\{b(u^{\boldsymbol{\alpha},\boldsymbol{\omega}},v_{m_1,m_2})-l(v_{m_1,m_2})\}^2$", labelpad=15)
     plt.xscale("log", base=2)
     plt.yscale("log", base=2)
-    
-    # Set labels for axes
     plt.xlabel(r"$m_1$\; ($x$-axis)", labelpad=10)
     plt.ylabel(r"$m_2$\; ($y$-axis)", labelpad=15)
-    plt.axvline(x=M1, color='black', linestyle='--', label=rf'x-cutoff $M_1 = {M1}$')
-    plt.axhline(y=M2, color='black', linestyle=':', label=rf'y-cutoff $M_2 = {M2}$')
-    #plt.legend(loc="upper right")
-    plt.title(r"Ratios of spectral coefficients: $\frac{LS/Adam}{Initial}$",pad=10)
+    plt.title(r"Spectral coefficients (Adam)",pad=10)
+    plt.plot([0, M1], [M2, M2], color='black', linestyle='--', label=rf'cutoff $M_1, M_2 = {M1}, {M2}$')
+    plt.plot([M1, M1], [0, M2], color='black', linestyle='--')
+    formatted_value_in = format_custom_scientific(value_inGD)
+    formatted_value_out = format_custom_scientific(value_outGD)
+    plt.plot([0], [0], linestyle='', label=rf"inside $= {formatted_value_in}$")
+    plt.plot([0], [0], linestyle='', label=rf"outside $= {formatted_value_out}$")
+    plt.legend(loc='upper right')
     figures.append(plt.gcf())
     plt.show()
     
-            
-    # plt.figure(figsize=(plot_width, plot_height))
-    # p = plt.scatter(modesINIX,modesINIY,c=spectrumINI_out,cmap="inferno",alpha=0.7)
-    # cbar = plt.colorbar(p, format='%.0e')
-    # cbar.set_label(r"$\{b(u^{\boldsymbol{\alpha},\boldsymbol{\omega}},v_{m_1,m_2})-l(v_{m_1,m_2})\}^2$", labelpad=10)
-    # plt.xscale("log", base=2)
-    # plt.xlabel(r"$m_1$", labelpad=0)
-    # plt.yscale("log", base=2)
-    # plt.ylabel(r"$m_2$",labelpad=15)
-
-# Colorbar with logarithmic scale (automatic)
-
-    
-    # rescale_colorbar(p, r"$e(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})$")
-    # plt.scatter(modesINIX,modesINIY,c=spectrumINI_out,cmap="viridis",alpha=0.7)
-    # plt.plot(modesGD,spectrumGD_out,marker='s', linestyle='None', markersize=3, label="Adam",color="C1")
-    # plt.plot(modesLSGD,spectrumLSGD_out,marker='^', linestyle='None', markersize=3, label="LS/Adam",color="C0")
-    # plt.ylabel(r"$\{b(u^{\boldsymbol{\alpha},\boldsymbol{\omega}},v_m)-l(v_m)\}^2$", labelpad=10)
-    # plt.xlabel(r"$m$")
-    # plt.xscale("log", base=2)
-    # plt.yscale("log")
-    # plt.axvline(x=M, color='black', linestyle='--', label=rf"cut-off $M={M}$")
-    # plt.legend()
-    # plt.title(r"Spectral coefficients of $r(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})$")
-    # figures.append(plt.gcf())
-    # plt.show()
-    
-    # plt.figure(figsize=(plot_width, plot_height))
-    # plt.plot(modesINI,data['accumINI'],'o', markersize=6, label="Initial",color="C5", alpha=0.5)
-    # plt.plot(modesGD,data['accumGD'],marker='s', linestyle='None', markersize=3, label="Adam",color="C1")
-    # plt.plot(modesLSGD,data['accumLSGD'],marker='^', linestyle='None', markersize=3, label="LS/Adam",color="C0")
-    # plt.ylabel(r"$\sum_{s=1}^m \{b(u^{\boldsymbol{\alpha},\boldsymbol{\omega}},v_s)-l(v_s)\}^2$", labelpad=10)
-    # plt.xlabel(r"$m$")
-    # plt.xscale("log", base=2)
-    # plt.yscale("log")
-    # plt.axvline(x=M, color='black', linestyle='--', label=rf"cut-off $M={M}$")
-    # plt.legend()
-    # plt.title(r"Accumulated spectral coefficients of $r(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})$")
-    # figures.append(plt.gcf())
-    # plt.show()
+    plt.figure(figsize=(plot_width, plot_height))
+    p = plt.scatter(modesLSGDX, modesLSGDY, c=spectrumLSGD_out, cmap="inferno", alpha=0.7, norm=LogNorm())
+    cbar = plt.colorbar(p, format=ticker.LogFormatter(labelOnlyBase=False))   
+    cbar.ax.yaxis.set_major_formatter(LogFormatterSciNotation())
+    cbar.set_label(r"$\{b(u^{\boldsymbol{\alpha},\boldsymbol{\omega}},v_{m_1,m_2})-l(v_{m_1,m_2})\}^2$", labelpad=15)
+    plt.xscale("log", base=2)
+    plt.yscale("log", base=2)
+    plt.xlabel(r"$m_1$\; ($x$-axis)", labelpad=10)
+    plt.ylabel(r"$m_2$\; ($y$-axis)", labelpad=15)
+    plt.title(r"Spectral coefficients (LS/Adam)",pad=10)
+    plt.plot([0, M1], [M2, M2], color='black', linestyle='--', label=rf'cutoff $M_1, M_2 = {M1}, {M2}$')
+    plt.plot([M1, M1], [0, M2], color='black', linestyle='--')
+    formatted_value_in = format_custom_scientific(value_inLSGD)
+    formatted_value_out = format_custom_scientific(value_outLSGD)
+    plt.plot([0], [0], linestyle='', label=rf"inside $= {formatted_value_in}$")
+    plt.plot([0], [0], linestyle='', label=rf"outside $= {formatted_value_out}$")
+    plt.legend(loc='upper right')
+    figures.append(plt.gcf())
+    plt.show()
     
     return figures
     
