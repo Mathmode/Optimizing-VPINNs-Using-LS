@@ -20,7 +20,7 @@ x = tf.repeat(x0, y0.shape[0], axis=0)
 y = tf.tile(y0, (x0.shape[0], 1))
 
 netINI, netGD, netLSGD = u_net(), u_net(), u_net()
-netINI(XYPLOT), netGD(XYPLOT), netLSGD(XYPLOT)
+netINI([x,y]), netGD([x,y]), netLSGD([x,y])
 netGD.set_weights(netINI.get_weights()), netLSGD.set_weights(netINI.get_weights())
 
 # We activate this backend to save all the plt's in 'save_and_plot_net' 
@@ -32,7 +32,7 @@ print("#######################")
 print(" PLOTS BEFORE TRAINING ")
 print("#######################")
 print()
-figures1 = save_and_plot_net(x,y,[netINI, netGD,netLSGD],file=False)
+figures1 = save_and_plot_net(x,y,[netINI,netGD,netLSGD],file=False)
 
 print()
 print("########################")
@@ -49,8 +49,8 @@ print("  PLOTS AFTER TRAINING  ")
 print("########################")
 print()
 figures2 = save_and_plot_loss(training.history,file=f"{RESULTS_FOLDER}/{EXPERIMENT_REFERENCE}_training.csv")
-figures3 = save_and_plot_spectrum([netINI, netGD,netLSGD],file=f"{RESULTS_FOLDER}/{EXPERIMENT_REFERENCE}_spectrum.csv")
-figures4 = save_and_plot_net(x,y,[netINI, netGD,netLSGD],file=f"{RESULTS_FOLDER}/{EXPERIMENT_REFERENCE}_predictions.csv")
+figures3 = save_and_plot_spectrum([netINI,netGD,netLSGD],file=f"{RESULTS_FOLDER}/{EXPERIMENT_REFERENCE}_spectrum.csv")
+figures4 = save_and_plot_net(x,y,[netINI,netGD,netLSGD],file=f"{RESULTS_FOLDER}/{EXPERIMENT_REFERENCE}_predictions.csv")
 
 
 # We save all the figures in a pdf.

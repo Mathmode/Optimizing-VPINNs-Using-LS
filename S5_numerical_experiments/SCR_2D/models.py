@@ -8,6 +8,7 @@ Last edited on June, 2024
 
 from config import A,B,N,M1,M2,SOURCE,EXACT,IMPLEMENTATION
 from SCR_2D.integration import integration_points_and_weights
+from SCR_2D.enforce_dirichlet import enforce_dirichlet
 import os, tensorflow as tf, numpy as np
 os.environ["KERAS_BACKEND"] = "tensorflow"
 import keras
@@ -26,6 +27,7 @@ class u_net(keras.Model):
         
         #Last (linear) layer
         self.linear_layer = keras.layers.Dense(units=1, activation=None, use_bias=False)
+        self.enforce_dirichlet = enforce_dirichlet()
         
     def build(self, input_shape):
         super(u_net, self).build(input_shape)
@@ -38,6 +40,7 @@ class u_net(keras.Model):
             
         # To impose boundary conditions
         out = out*(inputs[0]-A)*(inputs[1]-A)*(inputs[0]-B)*(inputs[1]-B)
+        #out = out*self.enforce_dirichlet(inputs)
         
         return out
     
@@ -112,7 +115,7 @@ class test_functions(keras.Model):
         super(test_functions,self).__init__()
         
         self.M1,self.M2 = spectrum_size
-        self.eval = lambda x,y: keras.ops.concatenate([2/(np.pi**2*np.sqrt(m1**2+m2**2))*keras.ops.sin(m1*np.pi*(x-A)/(B-A))*keras.ops.sin(m2*np.pi*(y-A)/(B-A)) for m1 in range(1, self.M1+1) for m2 in range(1, self.M2+1)], axis=1) # sines normalized in H10
+        self.eval = lambda x,y: keras.ops.concatenate([2/(np.pi*np.sqrt(m1**2+m2**2))*keras.ops.sin(m1*np.pi*(x-A)/(B-A))*keras.ops.sin(m2*np.pi*(y-A)/(B-A)) for m1 in range(1, self.M1+1) for m2 in range(1, self.M2+1)], axis=1) # sines normalized in H10
         self.devalX = lambda x,y: keras.ops.concatenate([2*m1/(np.pi*np.sqrt(m1**2+m2**2))*keras.ops.cos(m1*np.pi*(x-A)/(B-A))*keras.ops.sin(m2*np.pi*(y-A)/(B-A)) for m1 in range(1, self.M1+1) for m2 in range(1, self.M2+1)], axis=1) # dsinesX normalized  in H10
         self.devalY = lambda x,y: keras.ops.concatenate([2*m2/(np.pi*np.sqrt(m1**2+m2**2))*keras.ops.sin(m1*np.pi*(x-A)/(B-A))*keras.ops.cos(m2*np.pi*(y-A)/(B-A)) for m1 in range(1, self.M1+1) for m2 in range(1, self.M2+1)], axis=1) # dsinesY normalized  in H10
         self.ddevalXX = lambda x,y: keras.ops.concatenate([-2*m1**2/(np.pi*np.sqrt(m1**2+m2**2))*keras.ops.sin(m1*np.pi*(x-A)/(B-A))*keras.ops.sin(m2*np.pi*(y-A)/(B-A)) for m1 in range(1, self.M1+1) for m2 in range(1, self.M2+1)], axis=1) # dsinesY normalized  in H10
@@ -142,6 +145,7 @@ class residual(keras.Model):
         self.net = net
         self.f = SOURCE
         self.test = test_functions()
+        self.error = error(net)
         self.spectrum_test = test_functions(spectrum_size=[64,64])
         self.spectrum_integration_data = integration_points_and_weights(threshold = [4*64,4*64])
         
@@ -191,6 +195,8 @@ class residual(keras.Model):
                 
         x,y,w = self.spectrum_integration_data()
         inputs = [x,y]
+        
+        self.error.d([x,y])
 
         v = self.spectrum_test(inputs)
         f = self.f(x,y)

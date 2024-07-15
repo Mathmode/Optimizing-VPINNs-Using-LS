@@ -29,15 +29,15 @@ SOURCE = """lambda x,y : 8 * keras.ops.sin(2 * x) * keras.ops.sin(2 * y)"""
 A = 0
 B = PI
 N = 64
-M1 = 30
-M2 = 30
-K1 = M1
-K2 = M2
-KTEST1 = K1
-KTEST2 = K2
+M1 = 16
+M2 = 16
+K1 = 8*M1
+K2 = 8*M2
+KTEST1 = 2*K1
+KTEST2 = 2*K2
 IMPLEMENTATION = "weak"
-LEARNING_RATE = 10**(-3)
-EPOCHS = 100
+LEARNING_RATE = 10**(-4)
+EPOCHS = 1000
 XYPLOT = f"[tf.convert_to_tensor(np.expand_dims(np.linspace(A, B, num={KTEST1}), axis=1)),tf.convert_to_tensor(np.expand_dims(np.linspace(A, B, num={KTEST2}), axis=1))]"
 LEGEND_LOCATION = "best"
 

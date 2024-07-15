@@ -59,7 +59,6 @@ class loss_GDandLSGD(keras.Model):
         inputs = [x,y]
 
         # Right-hand side vector construction
-        #v = self.test.falsecall(inputs)
         v = self.test(inputs)
         f = self.f(x,y)
         self.l = tf.einsum("kr,kr,km->mr", w, f, v)
@@ -67,7 +66,6 @@ class loss_GDandLSGD(keras.Model):
         # Left-hand side bilinear-form matrix construction
         if IMPLEMENTATION == "weak":
             duX, duY = self.netLSGD.dfwd_vect(inputs)
-            #dvX, dvY = self.test.falsegradient(inputs)
             dvX, dvY = self.test.gradient(inputs)
             wduXdvX = tf.einsum("kr,kn,km->mn", w, duX, dvX)
             wduYdvY = tf.einsum("kr,kn,km->mn", w, duY, dvY)
@@ -75,7 +73,6 @@ class loss_GDandLSGD(keras.Model):
                 
         elif IMPLEMENTATION == "ultraweak":
             u = self.netLSGD.call_vect(inputs)
-            #laplacianv = self.test.falselaplacian(inputs)
             laplacianv = self.test.laplacian(inputs)
             self.B = tf.einsum("kr,kn,km->mn", w, -u, laplacianv)
             
@@ -102,7 +99,6 @@ class loss_GDandLSGD(keras.Model):
         x,y,w = data
         inputs = [x,y]
 
-        #v = self.test.falsecall(inputs)
         v = self.test(inputs)
         f = self.f(x,y)
         RHV = tf.einsum("kr,kr,km -> mr", w, f, v)
@@ -110,7 +106,6 @@ class loss_GDandLSGD(keras.Model):
         
         if IMPLEMENTATION == "weak":
             duX_GD, duY_GD = self.netGD.dbwd(inputs)
-            #dvX, dvY = self.test.falsegradient(inputs)
             dvX, dvY = self.test.gradient(inputs)
             wduXdvX_GD = tf.einsum("kr,kr,km->mr", w, duX_GD, dvX)
             wduYdvY_GD = tf.einsum("kr,kr,km->mr", w, duY_GD, dvY)
@@ -124,7 +119,6 @@ class loss_GDandLSGD(keras.Model):
         elif IMPLEMENTATION == "ultraweak":
             uGD = self.netGD(inputs)
             uLSGD = self.netLSGD(inputs)
-            #laplacianv = self.test.falselaplacian(inputs)
             laplacianv = self.test.laplacian(inputs)
             LHV_GD = tf.einsum("kr,kr,km->mr", w, -uGD, laplacianv)
             LHV_LSGD = tf.einsum("kr,kr,km->mr", w, -uLSGD, laplacianv)

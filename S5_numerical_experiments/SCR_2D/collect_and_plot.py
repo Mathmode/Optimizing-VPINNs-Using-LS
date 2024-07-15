@@ -160,7 +160,7 @@ def save_and_plot_net(x, y, nets, file=False):
     plot_width, plot_height = 6.4, 4.8
     
     plt.figure(figsize=(plot_width, plot_height))
-    p = plt.scatter(x,y,c=exact_out,cmap="viridis",alpha=0.7)
+    p = plt.scatter(x,y,c=exact_out,cmap="plasma",alpha=0.7)
     auto_format_colorbar(p, r"$u^*$")
     plt.xlabel(r"$x$", labelpad=5)
     plt.ylabel(r"$y$", labelpad=15)
@@ -169,7 +169,7 @@ def save_and_plot_net(x, y, nets, file=False):
     plt.show()
     
     plt.figure(figsize=(plot_width, plot_height))
-    p = plt.scatter(x,y,c=netGD_out,cmap="viridis",alpha=0.7)
+    p = plt.scatter(x,y,c=netGD_out,cmap="plasma",alpha=0.7)
     auto_format_colorbar(p, r"$u^{\boldsymbol{\alpha},\boldsymbol{\omega}}$")
     plt.xlabel(r"$x$", labelpad=5)
     plt.ylabel(r"$y$", labelpad=15)
@@ -178,7 +178,7 @@ def save_and_plot_net(x, y, nets, file=False):
     plt.show()
     
     plt.figure(figsize=(plot_width, plot_height))
-    p = plt.scatter(x,y,c=netLSGD_out,cmap="viridis",alpha=0.7)
+    p = plt.scatter(x,y,c=netLSGD_out,cmap="plasma",alpha=0.7)
     auto_format_colorbar(p, r"$u^{\boldsymbol{\alpha},\boldsymbol{\omega}}$")
     plt.xlabel(r"$x$", labelpad=5)
     plt.ylabel(r"$y$", labelpad=15)
@@ -187,7 +187,7 @@ def save_and_plot_net(x, y, nets, file=False):
     plt.show()
     
     plt.figure(figsize=(plot_width, plot_height))
-    p = plt.scatter(x,y,c=errorGD_out,cmap="viridis",alpha=0.7)
+    p = plt.scatter(x,y,c=errorGD_out,cmap="plasma",alpha=0.7)
     auto_format_colorbar(p, r"$e(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})$")
     plt.xlabel(r"$x$", labelpad=5)
     plt.ylabel(r"$y$", labelpad=15)
@@ -196,7 +196,7 @@ def save_and_plot_net(x, y, nets, file=False):
     plt.show()
     
     plt.figure(figsize=(plot_width, plot_height))
-    p = plt.scatter(x,y,c=errorLSGD_out,cmap="viridis",alpha=0.7)
+    p = plt.scatter(x,y,c=errorLSGD_out,cmap="plasma",alpha=0.7)
     auto_format_colorbar(p, r"$e(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})$")
     plt.xlabel(r"$x$", labelpad=5)
     plt.ylabel(r"$y$", labelpad=15)
@@ -206,7 +206,7 @@ def save_and_plot_net(x, y, nets, file=False):
     
     
     plt.figure(figsize=(plot_width, plot_height))
-    p = plt.scatter(x,y,c=data['derrorGD'],cmap="viridis",alpha=0.7)
+    p = plt.scatter(x,y,c=data['derrorGD'],cmap="plasma",alpha=0.7)
     auto_format_colorbar(p, r"$\vert \; \nabla e(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})\; \vert$")
     plt.xlabel(r"$x$", labelpad=5)
     plt.ylabel(r"$y$", labelpad=15)
@@ -215,7 +215,7 @@ def save_and_plot_net(x, y, nets, file=False):
     plt.show()
     
     plt.figure(figsize=(plot_width, plot_height))
-    p = plt.scatter(x,y,c=data['derrorLSGD'],cmap="viridis",alpha=0.7)
+    p = plt.scatter(x,y,c=data['derrorLSGD'],cmap="plasma",alpha=0.7)
     auto_format_colorbar(p, r"$\vert \; \nabla e(u^{\boldsymbol{\alpha},\boldsymbol{\omega}})\; \vert$")
     plt.xlabel(r"$x$", labelpad=5)
     plt.ylabel(r"$y$", labelpad=15)
