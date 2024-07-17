@@ -42,6 +42,7 @@ script_list = [
     'S54weak_M32.py', 'S54ultraweak_M32.py',
     'S54weak_M64.py', 'S54ultraweak_M64.py',
     'S54weak_M128.py', 'S54ultraweak_M128.py',
+    'S55weak_one.py', 'S55weak_ten.py',
 ]
 
 # Execute the scripts

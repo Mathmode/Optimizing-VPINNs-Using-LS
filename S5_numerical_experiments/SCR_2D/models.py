@@ -8,7 +8,6 @@ Last edited on June, 2024
 
 from config import A,B,N,M1,M2,SOURCE,EXACT,IMPLEMENTATION
 from SCR_2D.integration import integration_points_and_weights
-from SCR_2D.enforce_dirichlet import enforce_dirichlet
 import os, tensorflow as tf, numpy as np
 os.environ["KERAS_BACKEND"] = "tensorflow"
 import keras
@@ -27,7 +26,6 @@ class u_net(keras.Model):
         
         #Last (linear) layer
         self.linear_layer = keras.layers.Dense(units=1, activation=None, use_bias=False)
-        self.enforce_dirichlet = enforce_dirichlet()
         
     def build(self, input_shape):
         super(u_net, self).build(input_shape)

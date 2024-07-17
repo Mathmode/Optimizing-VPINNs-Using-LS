@@ -12,6 +12,7 @@ from SCR_2D.loss import loss_GDandLSGD
 from SCR_2D.collect_and_plot import save_and_plot_net, save_and_plot_spectrum, save_and_plot_loss
 from SCR_2D.callbacks import EndOfTrainingLS
 from config import RESULTS_FOLDER, EXPERIMENT_REFERENCE, EPOCHS, XYPLOT
+NAMES = ["training", "spectrumINI", "spectrumGD", "spectrumLSGD", "exact", "predictionGD", "predictionLSGD", "errorGD", "errorLSGD", "derrorGD", "derrorLSGD"]
 
 x0,y0 = XYPLOT
 
@@ -22,10 +23,6 @@ y = tf.tile(y0, (x0.shape[0], 1))
 netINI, netGD, netLSGD = u_net(), u_net(), u_net()
 netINI([x,y]), netGD([x,y]), netLSGD([x,y])
 netGD.set_weights(netINI.get_weights()), netLSGD.set_weights(netINI.get_weights())
-
-# We activate this backend to save all the plt's in 'save_and_plot_net' 
-# in a pdf file
-from matplotlib.backends.backend_pdf import PdfPages
 
 print()
 print("#######################")
@@ -53,7 +50,6 @@ figures3 = save_and_plot_spectrum([netINI,netGD,netLSGD],file=f"{RESULTS_FOLDER}
 figures4 = save_and_plot_net(x,y,[netINI,netGD,netLSGD],file=f"{RESULTS_FOLDER}/{EXPERIMENT_REFERENCE}_predictions.csv")
 
 
-# We save all the figures in a pdf.
-with PdfPages(f"{RESULTS_FOLDER}/{EXPERIMENT_REFERENCE}_figures.pdf") as pdf:
-    for fig in figures1 + figures2 + figures3 + figures4:
-        pdf.savefig(fig, bbox_inches='tight')
+for i, fig in enumerate(figures2 + figures3 + figures4):
+    NAME = NAMES[i]
+    fig.savefig(f"{RESULTS_FOLDER}/{EXPERIMENT_REFERENCE}_{NAME}.png", format='png', dpi=150, bbox_inches='tight')
