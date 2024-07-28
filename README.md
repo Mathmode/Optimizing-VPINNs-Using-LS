@@ -4,7 +4,7 @@ Pieces of codes of the manuscript "Optimizing Variational Physics-Informed Neura
 
 Section S3_automatic_differentiation relates to Section 3 in the manuscript. To reproduce the manuscript results, execute 'outer.py'.
 
-Section S4_LSGD_and_GD_optimizers relates to Section 4 in the manuscript. To reproduce the manuscript results, execute 'outerGDandLSGD.py'.
+Section S4_GD_and_LSGD_optimizers relates to Section 4 in the manuscript. To reproduce the manuscript results, execute 'outerGDandLSGD.py'.
 
 Section S5_numerical_results relates to Section 5 in the manuscript. To reproduce the manuscript results, execute 'S5_all_experiments.py'.
 
