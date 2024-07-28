@@ -47,4 +47,4 @@ figures4 = save_and_plot_net(x,[netINI, netGD,netLSGD],file=f"{RESULTS_FOLDER}/{
 # We save all the figures (figures1, figures2 and figures3) in a pdf.
 for i, fig in enumerate(figures2 + figures3 + figures4):
     NAME = NAMES[i]
-    fig.savefig(f"{RESULTS_FOLDER}/{EXPERIMENT_REFERENCE}_{NAME}.png", format='png', dpi=150, bbox_inches='tight')
+    fig.savefig(f"{RESULTS_FOLDER}/{EXPERIMENT_REFERENCE}_{NAME}.png", format='png', dpi=300, bbox_inches='tight')

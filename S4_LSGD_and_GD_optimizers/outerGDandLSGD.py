@@ -54,29 +54,73 @@ run_outer_script('outerLSGD.py')
 # We remove the ERROR_FILE if it is empty. Otherwise, we leave it.
 if os.path.getsize(ERROR_FILE) == 0:
     os.remove(ERROR_FILE)
+    
 
-##### We compute the final ratios between LS/GD and GD #####
-# Load the data of the previous results 
-gd_data = pd.read_csv(RESULTS_FOLDER + "/flops_GD.csv")
-lsgd_data = pd.read_csv(RESULTS_FOLDER + "/flops_LSGD.csv")
+# Load the data from the CSV files
+flops_GD = pd.read_csv(RESULTS_FOLDER +'/flops_GD.csv')
+flops_LSGD = pd.read_csv(RESULTS_FOLDER +'/flops_LSGD.csv')
 
-# Merge the above restricting to 'N' and 'imple' keys
-merged_data = pd.merge(gd_data, lsgd_data,
-                       on=["N", "imple"],
-                       suffixes=("_GD", "_LSGD"))
+# Filter the dataframes based on 'imple' values
+ultraweak_LSGD = flops_LSGD[flops_LSGD['imple'] == 'ultraweak']
+weakfwd_LSGD = flops_LSGD[flops_LSGD['imple'] == 'weakfwd']
+weakbwd_LSGD = flops_LSGD[flops_LSGD['imple'] == 'weakbwd']
+weakbwd_GD = flops_GD[flops_GD['imple'] == 'weakbwd']
 
-# Calculate the ratios for each 'N'
-merged_data["ratio"] = (merged_data["total_LSGD"] / merged_data["total_GD"])
+# Merge the dataframes on 'N', 'M', and 'K'
+merged_ultraweak = pd.merge(ultraweak_LSGD, weakbwd_GD, on=['N', 'M', 'K'], suffixes=('_LSGD', '_GD'))
+merged_weakfwd = pd.merge(weakfwd_LSGD, weakbwd_GD, on=['N', 'M', 'K'], suffixes=('_LSGD', '_GD'))
+merged_weakbwd = pd.merge(weakbwd_LSGD, weakbwd_GD, on=['N', 'M', 'K'], suffixes=('_LSGD', '_GD'))
+
+# Compute the ratios
+merged_ultraweak['ratio'] = merged_ultraweak['total_LSGD'] / merged_ultraweak['total_GD']
+merged_weakfwd['ratio'] = merged_weakfwd['total_LSGD'] / merged_weakfwd['total_GD']
+merged_weakbwd['ratio'] = merged_weakbwd['total_LSGD'] / merged_weakbwd['total_GD']
+
+# Create the final dataframe
+quotients_df = pd.concat([
+    merged_ultraweak[['imple_LSGD', 'N', 'M', 'K', 'ratio']].rename(columns={'imple_LSGD': 'imple'}),
+    merged_weakfwd[['imple_LSGD', 'N', 'M', 'K', 'ratio']].rename(columns={'imple_LSGD': 'imple'}),
+    merged_weakbwd[['imple_LSGD', 'N', 'M', 'K', 'ratio']].rename(columns={'imple_LSGD': 'imple'})
+])
+
+quotients_df.reset_index(drop=True, inplace=True)
+
+# Remove 'M' and 'K' columns
+quotients_df_reduced = quotients_df.drop(columns=['M', 'K'])
 
 # Redefine the row order
 order = ["ultraweak", "weakfwd", "weakbwd"]
 
-# Pivot the data so that 'N' indexes columns and 'imple' indexes rows, respecting the order
-pivoted_data = merged_data.pivot(index="imple",
-                                 columns="N",
-                                 values="ratio").loc[order]
+# Pivot the data to rotate it
+pivoted_df = quotients_df_reduced.pivot(index='imple', columns='N', values='ratio').loc[order]
+pivoted_df.index.name = 'N'
 
-# Save results in a new CSV
-pivoted_data.to_csv(RESULTS_FOLDER + "/ratios_LSGDvsGD.csv")
+# Save the final data to a new CSV file
+pivoted_df.to_csv(RESULTS_FOLDER + "/simplified_quotients_LSGDvsGD.csv")
+
+
+# ##### We compute the final ratios between LS/GD and GD #####
+# # Load the data of the previous results 
+# gd_data = pd.read_csv(RESULTS_FOLDER + "/flops_GD.csv")
+# lsgd_data = pd.read_csv(RESULTS_FOLDER + "/flops_LSGD.csv")
+
+# # Merge the above restricting to 'N' and 'imple' keys
+# merged_data = pd.merge(gd_data, lsgd_data,
+#                        on=["N", "imple"],
+#                        suffixes=("_GD", "_LSGD"))
+
+# # Calculate the ratios for each 'N'
+# merged_data["ratio"] = (merged_data["total_LSGD"] / merged_data["total_GD"])
+
+# # Redefine the row order
+# order = ["ultraweak", "weakfwd", "weakbwd"]
+
+# # Pivot the data so that 'N' indexes columns and 'imple' indexes rows, respecting the order
+# pivoted_data = merged_data.pivot(index="imple",
+#                                  columns="N",
+#                                  values="ratio").loc[order]
+
+# # Save results in a new CSV
+# pivoted_data.to_csv(RESULTS_FOLDER + "/ratios_LSGDvsGD.csv")
 
 

@@ -36,7 +36,7 @@ KTEST = 8*K
 IMPLEMENTATION = "weak"
 SAMPLING = "uniform"
 LEARNING_RATE = 10**(-3)
-EPOCHS = 10000
+EPOCHS = 8000
 XPLOT = f"tf.convert_to_tensor(np.expand_dims(np.linspace(A, B, num={KTEST}), axis=1))"
 LEGEND_LOCATION = "best"
 
