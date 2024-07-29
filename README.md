@@ -1,6 +1,6 @@
 # Optimizing VPINNs Using LS
 
-Pieces of code for the experiments described in the manuscript **"Optimizing Variational Physics-Informed Neural Networks Using Least Squares"**, available at [link to the preprint soon!]
+Pieces of code for the experiments described in the manuscript **"Optimizing Variational Physics-Informed Neural Networks Using Least Squares"** available at [link to the preprint soon!]
 
 ### Section `S3_automatic_differentiation`
 
