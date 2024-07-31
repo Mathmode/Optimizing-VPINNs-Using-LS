@@ -4,7 +4,7 @@ Pieces of code for the experiments described in the manuscript **"Optimizing Var
 
 ### Section `S3_automatic_differentiation`
 
-Relates to Section 3 in the manuscript. To reproduce the manuscript results, execute `outer.py`.
+Relates to Section 3 in the manuscript. To reproduce the manuscript results, execute `outerAD.py`.
 
 ### Section `S4_GD_and_LSGD_optimizers`
 
