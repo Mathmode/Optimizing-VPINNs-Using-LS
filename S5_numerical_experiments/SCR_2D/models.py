@@ -226,6 +226,3 @@ class residual(keras.Model):
         value_total = value_in + value_out
         
         return value_in, value_out, value_total
-
-        
- 
